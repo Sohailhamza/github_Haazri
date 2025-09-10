@@ -23,6 +23,8 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, AdminDashboard.class);
             startActivity(intent);
+
+
         });
 //
 //
