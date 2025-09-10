@@ -1,0 +1,87 @@
+<!-- res/layout/item_employee.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@drawable/rounded_edittext"
+    android:layout_marginBottom="8dp">
+
+    <!-- Employee Photo -->
+
+    <!-- Details Column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvEmployeeName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Employee Name"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvEmployeeId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ID: 101"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvEmployeeStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status: Present"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvDutyStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Duty Start: 9:00 AM"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvDutyOff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Duty Off: 6:00 PM"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvBreakStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Break Start: 1:00 PM"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvBreakEnd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Break End: 1:30 PM"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+    </LinearLayout>
+    <ImageView
+        android:id="@+id/ivEmployeePhoto"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginEnd="12dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_person"
+        android:background="@drawable/circle_background"
+        android:padding="4dp"/>
+
+
+</LinearLayout>
