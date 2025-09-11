@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "455428915004",
+    "project_id": "hazri-807c8",
+    "storage_bucket": "hazri-807c8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455428915004:android:24cde0b2c3b27824c6a839",
+        "android_client_info": {
+          "package_name": "com.example.onenew"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1JLIFyro37f71dqjGip_3nWc48LsuPrY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
