@@ -41,13 +41,13 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // 1️⃣ Check in Admins
+        // 1️⃣ Check in Admins collection
         db.collection("admins").document(id).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         checkPassword(doc, pass, true);
                     } else {
-                        // 2️⃣ Else check in Employees
+                        // 2️⃣ Else check in Employees collection
                         db.collection("employees").document(id).get()
                                 .addOnSuccessListener(empDoc -> {
                                     if (empDoc.exists()) {
@@ -56,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
                                         Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
                                     }
                                 })
-                                .addOnFailureListener(e -> showError(e));
+                                .addOnFailureListener(this::showError);
                     }
                 })
                 .addOnFailureListener(this::showError);
@@ -70,9 +70,17 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
 
             if (isAdmin) {
+                // ✅ Admin Dashboard
                 startActivity(new Intent(this, AdminDashboard.class));
             } else {
-                startActivity(new Intent(this, EmployeeDashboard.class));
+                // ✅ Employee Dashboard
+                String empId   = doc.getId();               // Document ID as employee ID
+                String empName = doc.getString("name");     // "name" field from Firestore
+
+                Intent intent = new Intent(this, EmployeeDashboard.class);
+                intent.putExtra("empId", empId);
+                intent.putExtra("empName", empName);
+                startActivity(intent);
             }
             finish();
         } else {

@@ -1,62 +1,91 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
     android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp"
+    android:layout_height="match_parent"
+    android:padding="5dp"
     android:background="@android:color/white">
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_gravity="center"
-    android:gravity="center"
-    android:orientation="vertical"
-    >
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@drawable/outline_account_circle"
-        android:layout_marginBottom="20dp"
-        />
 
-    <EditText
-        android:id="@+id/etUsername"
+    <LinearLayout
+
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autofillHints=""
-        android:background="@drawable/edittext_bg"
-        android:drawablePadding="10dp"
-        android:hint="Username, Employee ID"
-        android:padding="10dp"
-        android:textSize="16sp"
-        tools:ignore="HardcodedText" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="10dp">
 
-    <EditText
-        android:id="@+id/etPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:layout_marginTop="12dp"
-        android:padding="12dp"
-        android:background="@drawable/edittext_bg"
-        android:textSize="16sp"
-        android:drawablePadding="10dp"/>
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/applogo"
+            android:layout_marginBottom="20dp" />
 
-    <!-- Login Button -->
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Login"
-        android:textSize="25sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:backgroundTint="@color/green"
-        android:layout_marginTop="25dp"
-        android:padding="10dp"
-        tools:ignore="HardcodedText" />
+        <!-- Username -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
+            android:backgroundTint="@color/white"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            android:padding="8dp">
 
-</LinearLayout>
+            <EditText
+                android:id="@+id/etUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Username, Employee ID"
+                android:singleLine="true"
+                android:imeOptions="actionNext"
+                android:padding="10dp"
+                android:textSize="20sp"
+                android:background="@drawable/edittext_bg"
+                android:backgroundTint="@color/white"
+                android:drawablePadding="10dp"
+                tools:ignore="HardcodedText" />
+        </androidx.cardview.widget.CardView>
+
+        <!-- Password -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/white"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            android:padding="8dp">
+
+            <EditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:imeOptions="actionNext"
+                android:padding="10dp"
+                android:textSize="20sp"
+                android:background="@drawable/edittext_bg"
+                android:backgroundTint="@color/white"
+                android:drawablePadding="10dp"
+                tools:ignore="HardcodedText" />
+        </androidx.cardview.widget.CardView>
+
+        <!-- Login Button -->
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="2dp"
+            android:layout_marginTop="20dp"
+            android:text="Login"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/green"
+            android:padding="5dp"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
 </ScrollView>

@@ -7,6 +7,18 @@
 
     android:background="@color/white">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Welcome"
+        android:gravity="center"
+        android:textSize="50sp"
+        android:textColor="@color/black"
+        android:textStyle="italic"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginBottom="200dp"
+
+        />
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLogIn"
         android:layout_width="100dp"
