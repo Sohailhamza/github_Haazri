@@ -29,7 +29,9 @@ public class LoginActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        btnLogin.setOnClickListener(v -> doLogin());
+        btnLogin.setOnClickListener(v -> doLogin(
+
+        ));
     }
 
     private void doLogin() {
@@ -69,21 +71,19 @@ public class LoginActivity extends AppCompatActivity {
                     isAdmin ? "Admin Login Successful" : "Employee Login Successful",
                     Toast.LENGTH_SHORT).show();
 
+            Intent intent;
             if (isAdmin) {
-                // ✅ Admin Dashboard
-                startActivity(new Intent(this, AdminDashboard.class));
+                intent = new Intent(this, AdminDashboard.class);
             } else {
-                // ✅ Employee Dashboard
-                String empId   = doc.getId();               // Document ID as employee ID
-                String empName = doc.getString("name");     // "name" field from Firestore
-
-                Intent intent = new Intent(this, EmployeeDashboard.class);
-                intent.putExtra("empId", empId);
-                intent.putExtra("empName", empName);
-                startActivity(intent);
+                intent = new Intent(this, EmployeeDashboard.class);
+                intent.putExtra("empId", doc.getId());
+                intent.putExtra("empName", doc.getString("name"));
             }
-            finish();
-        } else {
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+        else {
             Toast.makeText(this, "Wrong password", Toast.LENGTH_SHORT).show();
         }
     }

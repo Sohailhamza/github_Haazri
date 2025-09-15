@@ -24,9 +24,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class EmployeeDashboard extends AppCompatActivity {
 
@@ -46,6 +50,7 @@ public class EmployeeDashboard extends AppCompatActivity {
     private long checkInTime = 0L;
     private long breakStartTime = 0L;
     private long totalBreakMillis = 0L;
+    private final long now = System.currentTimeMillis();
 
     // === Office coordinates (example) ===
     private static final double OFFICE_LAT =  30.8049544;  // replace with your lat
@@ -111,6 +116,34 @@ public class EmployeeDashboard extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void handleCheckIn() {
         if (checkInTime != 0) {
+
+            // === Firestore save ===
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    .format(new Date());
+
+            Map<String, Object> checkInData = new HashMap<>();
+            checkInData.put("employeeId", tvEmpId.getText().toString());
+            checkInData.put("name", tvName.getText().toString());
+            checkInData.put("status", "Present");
+            checkInData.put("checkInTime",
+                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(checkInTime)));
+
+            db.collection("attendance")
+                    .document(todayId)                 // date = today
+                    .collection("records")
+                    .document(tvEmpId.getText().toString())
+                    .set(checkInData)
+                    .addOnSuccessListener(a ->
+                            Toast.makeText(this, "Attendance saved in Firestore", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+
+
+            // === Firestore save completed===
+            checkInTime = 0;
+            tvCheckInTime.setText("Check-In Time: ");
+
             Toast.makeText(this, "Already checked in", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -125,6 +158,28 @@ public class EmployeeDashboard extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void handleCheckOut() {
         if (checkInTime == 0) {
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    .format(new Date());
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("checkOutTime",
+                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
+            long dutyMillis = 0L;
+            update.put("dutyMillis", dutyMillis);
+            update.put("breakMillis", totalBreakMillis);
+            update.put("status", "CheckedOut");
+
+            db.collection("attendance")
+                    .document(todayId)
+                    .collection("records")
+                    .document(tvEmpId.getText().toString())
+                    .update(update)
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+
+
             Toast.makeText(this, "Check in first", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -266,5 +321,13 @@ public class EmployeeDashboard extends AppCompatActivity {
                 Toast.makeText(this, "Permission denied.", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+    @SuppressLint("GestureBackNavigation")
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        moveTaskToBack(true);
+        finishAffinity();
+
     }
 }

@@ -21,15 +21,15 @@ public class Splash extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-
         ImageView img = findViewById(R.id.splashLogo);
         Animation zoomIn = AnimationUtils.loadAnimation(this, R.anim.zoom_in);
         img.startAnimation(zoomIn);
 
+        
         // 2.5 second ke baad main screen
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             startActivity(new Intent(Splash.this, MainActivity.class));
             finish();
-        }, 2500);
+        }, 2700);
     }
 }
