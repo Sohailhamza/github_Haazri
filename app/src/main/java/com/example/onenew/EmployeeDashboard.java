@@ -3,13 +3,9 @@ package com.example.onenew;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +20,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -34,7 +33,7 @@ import java.util.Map;
 
 public class EmployeeDashboard extends AppCompatActivity {
 
-    private static final int PERMISSION_CAMERA = 200;
+    private static final int PERMISSION_CAMERA   = 200;
     private static final int PERMISSION_LOCATION = 201;
 
     // === UI ===
@@ -50,25 +49,26 @@ public class EmployeeDashboard extends AppCompatActivity {
     private long checkInTime = 0L;
     private long breakStartTime = 0L;
     private long totalBreakMillis = 0L;
-    private final long now = System.currentTimeMillis();
 
-    // === Office coordinates (example) ===
-    private static final double OFFICE_LAT =  30.8049544;  // replace with your lat
-    private static final double OFFICE_LNG = 73.4381871;  // replace with your lng
-    private static final float ALLOWED_RADIUS_METERS = 100f;
+    // ✅ Home Mart exact coordinates
+    private static final double OFFICE_LAT = 30.8049604;
+    private static final double OFFICE_LNG = 73.4380137;
+    private static final float  ALLOWED_RADIUS_METERS = 100f;
 
-    private final ActivityResultLauncher<Intent> cameraLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                    result -> {
-                        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                            Bundle extras = result.getData().getExtras();
-                            if (extras != null) {
-                                capturedImage = (Bitmap) extras.get("data");
-                                if (dialogImagePreview != null && capturedImage != null) {
-                                    dialogImagePreview.setImageBitmap(capturedImage);
-                                    if (btnSave != null) btnSave.setEnabled(true);
-                                }
+    private FusedLocationProviderClient fusedClient;
+
+    /** Simple camera launcher returning a Bitmap thumbnail */
+    private final ActivityResultLauncher<Void> cameraLauncher =
+            registerForActivityResult(new ActivityResultContracts.TakePicturePreview(),
+                    bitmap -> {
+                        if (bitmap != null) {
+                            capturedImage = bitmap;
+                            if (dialogImagePreview != null) {
+                                dialogImagePreview.setImageBitmap(bitmap);
+                                if (btnSave != null) btnSave.setEnabled(true);
                             }
+                        } else {
+                            Toast.makeText(this, "Camera cancelled", Toast.LENGTH_SHORT).show();
                         }
                     });
 
@@ -77,6 +77,8 @@ public class EmployeeDashboard extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_employee_dashboard);
+
+        fusedClient = LocationServices.getFusedLocationProviderClient(this);
 
         // ---- Bind Views ----
         tvName          = findViewById(R.id.tvName);
@@ -92,14 +94,13 @@ public class EmployeeDashboard extends AppCompatActivity {
         tvCheckOutTime  = findViewById(R.id.tvCheckOutTime);
 
         // ---- Show name/ID from Login ----
-        var empId   = getIntent().getStringExtra("empId");
-        var empName = getIntent().getStringExtra("empName");
-
+        String empId   = getIntent().getStringExtra("empId");
+        String empName = getIntent().getStringExtra("empName");
         tvName.setText(empName != null ? empName : "Employee");
         tvEmpId.setText(empId   != null ? empId   : "ID");
 
         // ---- Show today's date ----
-        var today = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
+        String today = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
                 .format(new Date());
         tvDate.setText(today);
 
@@ -116,12 +117,16 @@ public class EmployeeDashboard extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void handleCheckIn() {
         if (checkInTime != 0) {
+            Toast.makeText(this, "Already checked in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showCaptureDialog(() -> {
+            checkInTime = System.currentTimeMillis();
+            tvCheckInTime.setText("Check-In Time: " +
+                    new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(checkInTime)));
 
-            // === Firestore save ===
             FirebaseFirestore db = FirebaseFirestore.getInstance();
-            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    .format(new Date());
-
+            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
             Map<String, Object> checkInData = new HashMap<>();
             checkInData.put("employeeId", tvEmpId.getText().toString());
             checkInData.put("name", tvName.getText().toString());
@@ -130,56 +135,18 @@ public class EmployeeDashboard extends AppCompatActivity {
                     new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(checkInTime)));
 
             db.collection("attendance")
-                    .document(todayId)                 // date = today
+                    .document(todayId)
                     .collection("records")
                     .document(tvEmpId.getText().toString())
                     .set(checkInData)
-                    .addOnSuccessListener(a ->
-                            Toast.makeText(this, "Attendance saved in Firestore", Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-
-
-            // === Firestore save completed===
-            checkInTime = 0;
-            tvCheckInTime.setText("Check-In Time: ");
-
-            Toast.makeText(this, "Already checked in", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        showCaptureDialog(() -> {
-            checkInTime = System.currentTimeMillis();
-            tvCheckInTime.setText("Check-In Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(checkInTime)));
-            Toast.makeText(this, "Checked In!", Toast.LENGTH_SHORT).show();
+                    .addOnSuccessListener(a -> Toast.makeText(this, "Attendance saved", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
         });
     }
 
     @SuppressLint("SetTextI18n")
     private void handleCheckOut() {
         if (checkInTime == 0) {
-
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    .format(new Date());
-
-            Map<String, Object> update = new HashMap<>();
-            update.put("checkOutTime",
-                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
-            long dutyMillis = 0L;
-            update.put("dutyMillis", dutyMillis);
-            update.put("breakMillis", totalBreakMillis);
-            update.put("status", "CheckedOut");
-
-            db.collection("attendance")
-                    .document(todayId)
-                    .collection("records")
-                    .document(tvEmpId.getText().toString())
-                    .update(update)
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-
-
             Toast.makeText(this, "Check in first", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -188,9 +155,25 @@ public class EmployeeDashboard extends AppCompatActivity {
 
         tvDutyHour.setText("Duty Hour: " + formatMillis(dutyMillis));
         tvBreakDuration.setText("Break Duration: " + formatMillis(totalBreakMillis));
-        tvCheckOutTime.setText("Check-Out Time: " + new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(now)));
+        tvCheckOutTime.setText("Check-Out Time: " +
+                new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(now)));
 
-        Toast.makeText(this, "Checked Out!", Toast.LENGTH_SHORT).show();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        Map<String, Object> update = new HashMap<>();
+        update.put("checkOutTime",
+                new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
+        update.put("dutyMillis", dutyMillis);
+        update.put("breakMillis", totalBreakMillis);
+        update.put("status", "CheckedOut");
+
+        db.collection("attendance")
+                .document(todayId)
+                .collection("records")
+                .document(tvEmpId.getText().toString())
+                .update(update)
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private void handleStartBreak() {
@@ -225,7 +208,6 @@ public class EmployeeDashboard extends AppCompatActivity {
     /*--------------------------------------------------
      *   Camera Selfie Dialog
      *--------------------------------------------------*/
-    @SuppressLint("QueryPermissionsNeeded")
     private void showCaptureDialog(Runnable onSuccess) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_capture, null);
@@ -241,10 +223,7 @@ public class EmployeeDashboard extends AppCompatActivity {
 
         btnCapture.setOnClickListener(v -> {
             if (checkCameraPermission()) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (intent.resolveActivity(getPackageManager()) != null) {
-                    cameraLauncher.launch(intent);
-                }
+                cameraLauncher.launch(null);
             }
         });
 
@@ -263,19 +242,33 @@ public class EmployeeDashboard extends AppCompatActivity {
      *--------------------------------------------------*/
     private void attemptAction(Runnable action) {
         if (!checkLocationPermission()) return;
-        if (isInsideOffice()) {
-            action.run();
-        } else {
-            Toast.makeText(this, "You are not at the office location!", Toast.LENGTH_LONG).show();
-        }
+
+        fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(loc -> {
+                    if (loc == null) {
+                        Toast.makeText(this, "Location unavailable. Try again.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    float[] distance = new float[1];
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(),
+                            OFFICE_LAT, OFFICE_LNG,
+                            distance);
+                    if (distance[0] <= ALLOWED_RADIUS_METERS) {
+                        action.run();
+                    } else {
+                        Toast.makeText(this, "You are not at the office location!", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Location error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private boolean checkCameraPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    PERMISSION_CAMERA);
+                    new String[]{Manifest.permission.CAMERA}, PERMISSION_CAMERA);
             return false;
         }
         return true;
@@ -285,28 +278,10 @@ public class EmployeeDashboard extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    PERMISSION_LOCATION);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_LOCATION);
             return false;
         }
         return true;
-    }
-
-    private boolean isInsideOffice() {
-        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) return false;
-
-        @SuppressLint("MissingPermission")
-        Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if (loc == null) {
-            Toast.makeText(this, "Location unavailable", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        float[] distance = new float[1];
-        Location.distanceBetween(loc.getLatitude(), loc.getLongitude(),
-                OFFICE_LAT, OFFICE_LNG, distance);
-        return distance[0] <= ALLOWED_RADIUS_METERS;
     }
 
     @Override
@@ -322,12 +297,12 @@ public class EmployeeDashboard extends AppCompatActivity {
             }
         }
     }
+
     @SuppressLint("GestureBackNavigation")
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         moveTaskToBack(true);
         finishAffinity();
-
     }
 }

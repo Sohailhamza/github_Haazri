@@ -10,59 +10,67 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 public class CaptureDialog extends AppCompatActivity {
 
-    private static final int CAMERA_REQUEST = 100;
     private ImageView imageView;
     private Button btnCapture, btnSave;
+
+    private final ActivityResultLauncher<Intent> cameraLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Bitmap photo = (Bitmap) result.getData().getExtras().get("data");
+                    imageView.setImageBitmap(photo);
+                    btnSave.setEnabled(true);
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dialog_capture); // ✅ Ye wala layout use hoga
+        setContentView(R.layout.dialog_capture);
 
         imageView = findViewById(R.id.imagePreview);
         btnCapture = findViewById(R.id.btnCapture);
         btnSave = findViewById(R.id.btnSave);
 
-        // Default disable Save button until picture is captured
         btnSave.setEnabled(false);
 
-        // Request camera permission if not granted
+        // Request camera permission if not already granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA}, 200);
         }
 
-        // Capture button
         btnCapture.setOnClickListener(v -> openCamera());
-
-        // Save button
         btnSave.setOnClickListener(v -> {
             Toast.makeText(this, "✅ Image saved with attendance!", Toast.LENGTH_SHORT).show();
-            finish(); // close activity
+            finish();
         });
     }
 
     private void openCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(intent, CAMERA_REQUEST);
+            cameraLauncher.launch(intent);
+        } else {
+            Toast.makeText(this, "No camera app found", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK && data != null) {
-            Bitmap photo = (Bitmap) data.getExtras().get("data");
-            imageView.setImageBitmap(photo);
-            btnSave.setEnabled(true); // enable save after picture
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 200 && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera();
         }
     }
 }
