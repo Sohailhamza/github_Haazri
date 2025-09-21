@@ -2,7 +2,6 @@ package com.example.onenew;
 
 import android.app.Dialog;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,50 +19,64 @@ import java.util.Map;
 
 public class AddEmployeeDialog extends DialogFragment {
 
-    private EditText etName, etID, etPassword;
+    private EditText etName, etID, etPassword, etPhoneNum, etAddress;
     private FirebaseFirestore db;
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        View v = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_add_employee, null, false);
+        View v = getLayoutInflater().inflate(R.layout.dialog_add_employee, null, false);
 
-        etName = v.findViewById(R.id.etName);
-        etID = v.findViewById(R.id.etID);
-        etPassword = v.findViewById(R.id.etPassword);
+        etName      = v.findViewById(R.id.etName);
+        etID        = v.findViewById(R.id.etID);
+        etPassword  = v.findViewById(R.id.etPassword);
+        etPhoneNum  = v.findViewById(R.id.etPhoneNum);
+        etAddress   = v.findViewById(R.id.etAddress);
+
         db = FirebaseFirestore.getInstance();
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setView(v);
+        // ⛔ Image pick button/commented — no image selection
+        // Button btnPickImage = v.findViewById(R.id.btnPickImage);
+        // btnPickImage.setVisibility(View.GONE);
 
+        // Add employee button
         Button btnAdd = v.findViewById(R.id.btnAddEmployeeConfirm);
         btnAdd.setOnClickListener(view -> addEmployee());
 
-        return builder.create();
+        return new AlertDialog.Builder(requireContext()).setView(v).create();
     }
 
     private void addEmployee() {
-        String name = etName.getText().toString().trim();
-        String id   = etID.getText().toString().trim();
-        String pass = etPassword.getText().toString().trim();
+        String name    = etName.getText().toString().trim();
+        String id      = etID.getText().toString().trim();
+        String pass    = etPassword.getText().toString().trim();
+        String phone   = etPhoneNum.getText().toString().trim();
+        String address = etAddress.getText().toString().trim();
 
-        if (name.isEmpty() || id.isEmpty() || pass.isEmpty()) {
+        if (name.isEmpty() || id.isEmpty() || pass.isEmpty() ||
+                phone.isEmpty() || address.isEmpty()) {
             Toast.makeText(getContext(), "All fields required", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // 🔹 No image upload — directly save data to Firestore
         Map<String, Object> emp = new HashMap<>();
         emp.put("name", name);
         emp.put("password", pass);
+        emp.put("phone", phone);
+        emp.put("address", address);
+        // emp.put("photoUrl", ""); // Optional placeholder
 
         db.collection("employees").document(id)
                 .set(emp)
                 .addOnSuccessListener(a -> {
-                    Toast.makeText(getContext(), "Employee Added", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(),
+                            "Employee Added", Toast.LENGTH_SHORT).show();
                     dismiss();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        Toast.makeText(getContext(),
+                                "Firestore Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show());
     }
 }

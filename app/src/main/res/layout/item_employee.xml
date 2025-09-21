@@ -72,6 +72,23 @@
             android:text="Break End: 1:30 PM"
             android:textSize="14sp"
             android:textColor="@color/black"/>
+        <TextView
+            android:id="@+id/tvEmployeePhone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone: 03123456789"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvEmployeeAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Address: Lahore"
+            android:textSize="14sp"
+            android:textColor="@color/black"/>
+
+
     </LinearLayout>
     <ImageView
         android:id="@+id/ivEmployeePhoto"

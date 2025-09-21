@@ -3,6 +3,7 @@ package com.example.onenew;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -50,14 +51,24 @@ public class EmployeeDashboard extends AppCompatActivity {
     private long breakStartTime = 0L;
     private long totalBreakMillis = 0L;
 
-    // ✅ Home Mart exact coordinates
-    private static final double OFFICE_LAT = 30.8049604;
-    private static final double OFFICE_LNG = 73.4380137;
-    private static final float  ALLOWED_RADIUS_METERS = 100f;
+    // SharedPreferences for persistent state
+    private SharedPreferences prefs;
+
+    // ✅ Locations Allowed
+    private static final double OFFICE1_LAT = 30.6484947;
+    private static final double OFFICE1_LNG = 73.1070595;
+
+    // Home Mart
+    private static final double OFFICE2_LAT = 30.8049604;
+    private static final double OFFICE2_LNG = 73.4380137;
+    //TBZ
+    private static final double OFFICE3_LAT = 30.6703321;
+    private static final double OFFICE3_LNG = 73.1276480;
+    private static final float  ALLOWED_RADIUS_METERS = 1000f;
 
     private FusedLocationProviderClient fusedClient;
 
-    /** Simple camera launcher returning a Bitmap thumbnail */
+    /** Camera launcher returning a Bitmap thumbnail */
     private final ActivityResultLauncher<Void> cameraLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicturePreview(),
                     bitmap -> {
@@ -78,6 +89,7 @@ public class EmployeeDashboard extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_employee_dashboard);
 
+        prefs = getSharedPreferences("attendance_prefs", MODE_PRIVATE);
         fusedClient = LocationServices.getFusedLocationProviderClient(this);
 
         // ---- Bind Views ----
@@ -104,11 +116,30 @@ public class EmployeeDashboard extends AppCompatActivity {
                 .format(new Date());
         tvDate.setText(today);
 
+        // ✅ Restore previous state
+        restoreSavedState();
+
         // ---- Clicks ----
         tvCheckInBtn.setOnClickListener(v -> attemptAction(this::handleCheckIn));
         btnCheckOut.setOnClickListener(v -> attemptAction(this::handleCheckOut));
         btnStartBreak.setOnClickListener(v -> attemptAction(this::handleStartBreak));
         btnEndBreak.setOnClickListener(v -> attemptAction(this::handleEndBreak));
+    }
+
+    /** Restore saved times when app reopens */
+    private void restoreSavedState() {
+        checkInTime      = prefs.getLong("checkInTime", 0L);
+        totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
+        breakStartTime   = prefs.getLong("breakStartTime", 0L);
+
+        if (checkInTime != 0L) {
+            tvCheckInTime.setText("Check-In Time: " +
+                    new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            .format(new Date(checkInTime)));
+        }
+        if (breakStartTime != 0L) {
+            Toast.makeText(this, "Break in progress", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /*--------------------------------------------------
@@ -122,6 +153,8 @@ public class EmployeeDashboard extends AppCompatActivity {
         }
         showCaptureDialog(() -> {
             checkInTime = System.currentTimeMillis();
+            prefs.edit().putLong("checkInTime", checkInTime).apply();
+
             tvCheckInTime.setText("Check-In Time: " +
                     new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(checkInTime)));
 
@@ -174,6 +207,16 @@ public class EmployeeDashboard extends AppCompatActivity {
                 .update(update)
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+
+        // reset stored values
+        prefs.edit()
+                .putLong("checkInTime", 0L)
+                .putLong("totalBreakMillis", 0L)
+                .putLong("breakStartTime", 0L)
+                .apply();
+        checkInTime = 0L;
+        totalBreakMillis = 0L;
+        breakStartTime = 0L;
     }
 
     private void handleStartBreak() {
@@ -186,6 +229,7 @@ public class EmployeeDashboard extends AppCompatActivity {
             return;
         }
         breakStartTime = System.currentTimeMillis();
+        prefs.edit().putLong("breakStartTime", breakStartTime).apply();
         Toast.makeText(this, "Break Started", Toast.LENGTH_SHORT).show();
     }
 
@@ -196,6 +240,10 @@ public class EmployeeDashboard extends AppCompatActivity {
         }
         totalBreakMillis += System.currentTimeMillis() - breakStartTime;
         breakStartTime = 0;
+        prefs.edit()
+                .putLong("totalBreakMillis", totalBreakMillis)
+                .putLong("breakStartTime", 0L)
+                .apply();
         Toast.makeText(this, "Break Ended", Toast.LENGTH_SHORT).show();
     }
 
@@ -249,15 +297,28 @@ public class EmployeeDashboard extends AppCompatActivity {
                         Toast.makeText(this, "Location unavailable. Try again.", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    float[] distance = new float[1];
+                    float[] d1 = new float[1];
+                    float[] d2 = new float[1];
+                    float[] d3 = new float[1];
+
                     android.location.Location.distanceBetween(
                             loc.getLatitude(), loc.getLongitude(),
-                            OFFICE_LAT, OFFICE_LNG,
-                            distance);
-                    if (distance[0] <= ALLOWED_RADIUS_METERS) {
+                            OFFICE1_LAT, OFFICE1_LNG, d1);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(),
+                            OFFICE2_LAT, OFFICE2_LNG, d2);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(),
+                            OFFICE3_LAT, OFFICE3_LNG, d3);
+
+                    if (d1[0] <= ALLOWED_RADIUS_METERS ||
+                            d2[0] <= ALLOWED_RADIUS_METERS ||
+                            d3[0] <= ALLOWED_RADIUS_METERS) {
                         action.run();
                     } else {
-                        Toast.makeText(this, "You are not at the office location!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this,
+                                "You are not at an allowed office location!",
+                                Toast.LENGTH_LONG).show();
                     }
                 })
                 .addOnFailureListener(e ->
@@ -298,11 +359,11 @@ public class EmployeeDashboard extends AppCompatActivity {
         }
     }
 
+    /**  Don't kill the task; just move to background  */
     @SuppressLint("GestureBackNavigation")
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         moveTaskToBack(true);
-        finishAffinity();
     }
 }

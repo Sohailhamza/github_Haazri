@@ -18,7 +18,6 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
     private final List<Employee> employeeList;
     private final OnEmployeeClickListener listener;
 
-    // Constructor with click listener
     public EmployeeAdapter(List<Employee> employeeList, OnEmployeeClickListener listener) {
         this.employeeList = employeeList;
         this.listener = listener;
@@ -35,56 +34,54 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Employee employee = employeeList.get(position);
+        Employee e = employeeList.get(position);
 
-        holder.tvName.setText(employee.getName());
-        holder.tvId.setText("ID: " + employee.getId());
-        holder.tvStatus.setText("Status: " + employee.getStatus());
-        holder.tvDutyStart.setText("Duty Start: " + employee.getDutyStartTime());
-        holder.tvDutyOff.setText("Duty Off: " + employee.getDutyOffTime());
-        holder.tvBreakStart.setText("Break Start: " + employee.getBreakStartTime());
-        holder.tvBreakEnd.setText("Break End: " + employee.getBreakEndTime());
+        holder.tvName.setText(e.getName());
+        holder.tvId.setText("ID: " + e.getId());
+        holder.tvStatus.setText("Status: " + e.getStatus());
+        holder.tvDutyStart.setText("Duty Start: " + e.getDutyStartTime());
+        holder.tvDutyOff.setText("Duty Off: " + e.getDutyOffTime());
+        holder.tvBreakStart.setText("Break Start: " + e.getBreakStartTime());
+        holder.tvBreakEnd.setText("Break End: " + e.getBreakEndTime());
+        holder.tvPhone.setText("Phone: " + e.getPhone());
+        holder.tvAddress.setText("Address: " + e.getAddress());
 
-        holder.ivPhoto.setImageResource(employee.getImageResId());
+        holder.ivPhoto.setImageResource(e.getImageResId());
 
-        // Status ke liye color coding
-        if (employee.getStatus().equalsIgnoreCase("Present")) {
-            holder.tvStatus.setTextColor(Color.parseColor("#4CAF50")); // Green
+        if (e.getStatus().equalsIgnoreCase("Present")) {
+            holder.tvStatus.setTextColor(Color.parseColor("#4CAF50"));
         } else {
-            holder.tvStatus.setTextColor(Color.parseColor("#F44336")); // Red
+            holder.tvStatus.setTextColor(Color.parseColor("#F44336"));
         }
 
-        // 👇 Click listener
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onEmployeeClick(employee);
-            }
+            if (listener != null) listener.onEmployeeClick(e);
         });
     }
 
     @Override
-    public int getItemCount() {
-        return employeeList.size();
-    }
+    public int getItemCount() { return employeeList.size(); }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvId, tvStatus, tvDutyStart, tvDutyOff, tvBreakStart, tvBreakEnd;
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tvName, tvId, tvStatus, tvDutyStart, tvDutyOff,
+                tvBreakStart, tvBreakEnd, tvPhone, tvAddress;
         ImageView ivPhoto;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivPhoto = itemView.findViewById(R.id.ivEmployeePhoto);
-            tvName = itemView.findViewById(R.id.tvEmployeeName);
-            tvId = itemView.findViewById(R.id.tvEmployeeId);
-            tvStatus = itemView.findViewById(R.id.tvEmployeeStatus);
-            tvDutyStart = itemView.findViewById(R.id.tvDutyStart);
-            tvDutyOff = itemView.findViewById(R.id.tvDutyOff);
+            ivPhoto      = itemView.findViewById(R.id.ivEmployeePhoto);
+            tvName       = itemView.findViewById(R.id.tvEmployeeName);
+            tvId         = itemView.findViewById(R.id.tvEmployeeId);
+            tvStatus     = itemView.findViewById(R.id.tvEmployeeStatus);
+            tvDutyStart  = itemView.findViewById(R.id.tvDutyStart);
+            tvDutyOff    = itemView.findViewById(R.id.tvDutyOff);
             tvBreakStart = itemView.findViewById(R.id.tvBreakStart);
-            tvBreakEnd = itemView.findViewById(R.id.tvBreakEnd);
+            tvBreakEnd   = itemView.findViewById(R.id.tvBreakEnd);
+            tvPhone      = itemView.findViewById(R.id.tvEmployeePhone);
+            tvAddress    = itemView.findViewById(R.id.tvEmployeeAddress);
         }
     }
 
-    // 👇 Interface for clicks
     public interface OnEmployeeClickListener {
         void onEmployeeClick(Employee employee);
     }

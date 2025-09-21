@@ -1,5 +1,6 @@
 package com.example.onenew;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +14,7 @@ import java.util.List;
 public class RemoveEmployee extends AppCompatActivity {
 
     private final List<Employee> employees = new ArrayList<>();
+
     private RemoveEmployeeAdapter adapter;
 
     @Override
@@ -28,6 +30,7 @@ public class RemoveEmployee extends AppCompatActivity {
         loadEmployees();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void loadEmployees() {
         FirebaseFirestore.getInstance().collection("employees")
                 .get()
@@ -36,7 +39,11 @@ public class RemoveEmployee extends AppCompatActivity {
                     for (DocumentSnapshot d : qs) {
                         String id   = d.getId();
                         String name = d.getString("name");
-                        employees.add(new Employee(id, name, "", "", "", "", "", 0));
+                        String phone   = d.getString("phone");
+                        String address = d.getString("address");
+
+                        employees.add(new Employee(id, name, "", "", "", "", "",phone != null ? phone : "",
+                                address != null ? address : "", 0));
                     }
                     adapter.notifyDataSetChanged();
                 });

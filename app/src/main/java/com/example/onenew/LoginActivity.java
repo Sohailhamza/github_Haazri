@@ -1,6 +1,7 @@
 package com.example.onenew;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -22,6 +23,13 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);   // your XML file name
+
+        SharedPreferences prefs = getSharedPreferences("attendance_prefs", MODE_PRIVATE);
+        if (prefs.getBoolean("isLoggedIn", false)) {
+            // sidha dashboard khol do
+            startActivity(new Intent(this, EmployeeDashboard.class));
+            finish();
+        }
 
         etUsername = findViewById(R.id.etUsername);
         etPassword = findViewById(R.id.etPassword);

@@ -1,5 +1,6 @@
 package com.example.onenew;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -45,6 +46,7 @@ public class EmployeeListActivity extends AppCompatActivity {
         db.collection("employees")
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @SuppressLint("NotifyDataSetChanged")
                     @Override
                     public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                         employeeList.clear();
@@ -58,6 +60,10 @@ public class EmployeeListActivity extends AppCompatActivity {
                             String breakStart = doc.getString("breakStart");
                             String breakEnd = doc.getString("breakEnd");
 
+                            // Optional fields – add null checks if needed
+                            String phone = doc.getString("phone");
+                            String address = doc.getString("address");
+
                             // Provide defaults if a field might be missing
                             Employee emp = new Employee(
                                     id,
@@ -67,7 +73,10 @@ public class EmployeeListActivity extends AppCompatActivity {
                                     outTime != null ? outTime : "",
                                     breakStart != null ? breakStart : "",
                                     breakEnd != null ? breakEnd : "",
-                                    R.drawable.ic_person
+                                    phone != null ? phone : "",
+                                    address != null ? address : "",
+                                    R.drawable.ic_person // Default photo
+
                             );
                             employeeList.add(emp);
                         }
