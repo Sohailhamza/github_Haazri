@@ -10,6 +10,7 @@ import java.util.List;
 
 public class SimpleStringAdapter extends RecyclerView.Adapter<SimpleStringAdapter.Holder> {
     private final List<String> items;
+
     public SimpleStringAdapter(List<String> items) { this.items = items; }
 
     @NonNull @Override

@@ -39,11 +39,11 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
         holder.tvName.setText(e.getName());
         holder.tvId.setText("ID: " + e.getId());
         holder.tvStatus.setText("Status: " + e.getStatus());
-        holder.tvDutyStart.setText("Duty Start: " + e.getDutyStartTime());
+        holder.tvDutyStart.setText("Duty S: " + e.getDutyStartTime());
         holder.tvDutyOff.setText("Duty Off: " + e.getDutyOffTime());
-        holder.tvBreakStart.setText("Break Start: " + e.getBreakStartTime());
+        holder.tvBreakStart.setText("Break S: " + e.getBreakStartTime());
         holder.tvBreakEnd.setText("Break End: " + e.getBreakEndTime());
-        holder.tvPhone.setText("Phone: " + e.getPhone());
+        holder.tvPhone.setText("Ph: " + e.getPhone());
         holder.tvAddress.setText("Address: " + e.getAddress());
 
         holder.ivPhoto.setImageResource(e.getImageResId());

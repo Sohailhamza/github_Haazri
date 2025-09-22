@@ -58,12 +58,17 @@ public class EmployeeDashboard extends AppCompatActivity {
     private static final double OFFICE1_LAT = 30.6484947;
     private static final double OFFICE1_LNG = 73.1070595;
 
-    // Home Mart
+    // Home Mart Okara
     private static final double OFFICE2_LAT = 30.8049604;
     private static final double OFFICE2_LNG = 73.4380137;
     //TBZ
     private static final double OFFICE3_LAT = 30.6703321;
     private static final double OFFICE3_LNG = 73.1276480;
+
+    //Home Mart Renala
+    private static final double OFFICE4_LAT = 30.8768576;
+    private static final double OFFICE4_LNG = 73.5926216;
+
     private static final float  ALLOWED_RADIUS_METERS = 1000f;
 
     private FusedLocationProviderClient fusedClient;
@@ -119,6 +124,7 @@ public class EmployeeDashboard extends AppCompatActivity {
         // ✅ Restore previous state
         restoreSavedState();
 
+
         // ---- Clicks ----
         tvCheckInBtn.setOnClickListener(v -> attemptAction(this::handleCheckIn));
         btnCheckOut.setOnClickListener(v -> attemptAction(this::handleCheckOut));
@@ -127,6 +133,7 @@ public class EmployeeDashboard extends AppCompatActivity {
     }
 
     /** Restore saved times when app reopens */
+    @SuppressLint("SetTextI18n")
     private void restoreSavedState() {
         checkInTime      = prefs.getLong("checkInTime", 0L);
         totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
@@ -134,7 +141,7 @@ public class EmployeeDashboard extends AppCompatActivity {
 
         if (checkInTime != 0L) {
             tvCheckInTime.setText("Check-In Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                    new SimpleDateFormat(" hh:mm a", Locale.getDefault())
                             .format(new Date(checkInTime)));
         }
         if (breakStartTime != 0L) {
@@ -300,6 +307,7 @@ public class EmployeeDashboard extends AppCompatActivity {
                     float[] d1 = new float[1];
                     float[] d2 = new float[1];
                     float[] d3 = new float[1];
+                    float[] d4 = new float[1];
 
                     android.location.Location.distanceBetween(
                             loc.getLatitude(), loc.getLongitude(),
@@ -310,10 +318,13 @@ public class EmployeeDashboard extends AppCompatActivity {
                     android.location.Location.distanceBetween(
                             loc.getLatitude(), loc.getLongitude(),
                             OFFICE3_LAT, OFFICE3_LNG, d3);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(),
+                            OFFICE4_LAT, OFFICE4_LNG, d4);
 
                     if (d1[0] <= ALLOWED_RADIUS_METERS ||
                             d2[0] <= ALLOWED_RADIUS_METERS ||
-                            d3[0] <= ALLOWED_RADIUS_METERS) {
+                            d3[0] <= ALLOWED_RADIUS_METERS || d4[0] <= ALLOWED_RADIUS_METERS) {
                         action.run();
                     } else {
                         Toast.makeText(this,

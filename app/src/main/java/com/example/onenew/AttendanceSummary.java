@@ -1,5 +1,6 @@
 package com.example.onenew;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -8,8 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,10 +20,15 @@ import java.util.Locale;
 
 public class AttendanceSummary extends AppCompatActivity {
 
-    private TextView tvDate, tvPresentCount, tvAbsentCount;
+    private TextView tvDate, tvPresentCount, tvAbsentCount, tvBreak, tvDuty, tvBreakStart, tvBreakEnd, tvIn, tvOut, tvName, tvId, tvStatus;
     private RecyclerView rvPresent, rvAbsent;
     private FirebaseFirestore db;
+    private final List<EmployeeAttendance> presentList = new ArrayList<>();
+    private final List<EmployeeAttendance> absentList  = new ArrayList<>();
 
+    private AttendanceAdapter presentAdapter, absentAdapter;
+
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,13 +39,27 @@ public class AttendanceSummary extends AppCompatActivity {
         tvAbsentCount = findViewById(R.id.tvAbsentCount);
         rvPresent     = findViewById(R.id.rvPresent);
         rvAbsent      = findViewById(R.id.rvAbsent);
+        tvBreak       = findViewById(R.id.tvBreak);
+        tvDuty        = findViewById(R.id.tvDuty);
+        tvBreakStart  = findViewById(R.id.tvBreakStart);
+        tvBreakEnd    = findViewById(R.id.tvBreakEnd);
+        tvIn          = findViewById(R.id.tvIn);
+        tvOut         = findViewById(R.id.tvOut);
+        tvName        = findViewById(R.id.tvName);
+        tvId          = findViewById(R.id.tvId);
+        tvStatus      = findViewById(R.id.tvStatus);
+
 
         rvPresent.setLayoutManager(new LinearLayoutManager(this));
         rvAbsent.setLayoutManager(new LinearLayoutManager(this));
 
+        presentAdapter = new AttendanceAdapter(presentList);
+        absentAdapter  = new AttendanceAdapter(absentList);
+        rvPresent.setAdapter(presentAdapter);
+        rvAbsent.setAdapter(absentAdapter);
+
         db = FirebaseFirestore.getInstance();
 
-        // Today’s date as key
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         tvDate.setText("Attendance: " + today);
 
@@ -47,30 +67,36 @@ public class AttendanceSummary extends AppCompatActivity {
     }
 
     private void loadSummary(String dateKey) {
-        db.collection("attendance").document(dateKey).get()
-                .addOnSuccessListener(this::populateUI)
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-    }
+        // `attendance/dateKey/employees` collection structure
+        db.collection("attendance").document(dateKey)
+                .collection("records")
+                .addSnapshotListener((snap, error) -> {
+                    if (error != null) {
+                        Toast.makeText(this, "Listen failed: " + error.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-    private void populateUI(DocumentSnapshot doc) {
-        if (!doc.exists()) {
-            Toast.makeText(this, "No attendance record for today", Toast.LENGTH_SHORT).show();
-            return;
-        }
+                    presentList.clear();
+                    absentList.clear();
 
-        long present = doc.getLong("presentCount") != null ? doc.getLong("presentCount") : 0;
-        long absent  = doc.getLong("absentCount")  != null ? doc.getLong("absentCount")  : 0;
-        List<String> presentList = (List<String>) doc.get("presentList");
-        List<String> absentList  = (List<String>) doc.get("absentList");
 
-        tvPresentCount.setText("Present: " + present);
-        tvAbsentCount.setText("Absent: " + absent);
+                    if (snap != null) {
+                        for (QueryDocumentSnapshot doc : snap) {
+                            EmployeeAttendance ea = doc.toObject(EmployeeAttendance.class);
+                            if ("CheckedOut".equalsIgnoreCase(ea.status) ||
+                                    "Present".equalsIgnoreCase(ea.status)) {
+                                presentList.add(ea);
+                            } else {
+                                absentList.add(ea);
+                            }
+                        }
+                        tvPresentCount.setText("Present: " + presentList.size());
+                        tvAbsentCount.setText("Absent: " + absentList.size());
 
-        if (presentList == null) presentList = new ArrayList<>();
-        if (absentList == null)  absentList  = new ArrayList<>();
-
-        rvPresent.setAdapter(new SimpleStringAdapter(presentList));
-        rvAbsent.setAdapter(new SimpleStringAdapter(absentList));
+                        presentAdapter.notifyDataSetChanged();
+                        absentAdapter.notifyDataSetChanged();
+                    }
+                });
     }
 }

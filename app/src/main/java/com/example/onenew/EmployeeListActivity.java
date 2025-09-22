@@ -25,6 +25,7 @@ public class EmployeeListActivity extends AppCompatActivity {
     private final List<Employee> employeeList = new ArrayList<>();
     private FirebaseFirestore db;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,63 +34,55 @@ public class EmployeeListActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerEmployees);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new EmployeeAdapter(employeeList, employee ->
-                Toast.makeText(this, "Clicked: " + employee.getName(), Toast.LENGTH_SHORT).show());
+        adapter = new EmployeeAdapter(employeeList,
+                employee -> Toast.makeText(this, "Clicked: " + employee.getName(), Toast.LENGTH_SHORT).show());
         recyclerView.setAdapter(adapter);
 
         db = FirebaseFirestore.getInstance();
-        fetchEmployees();
+        fetchEmployees(); // yeh call
+        
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void fetchEmployees() {
-        // employees collection in Firestore
         db.collection("employees")
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @SuppressLint("NotifyDataSetChanged")
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(EmployeeListActivity.this,
+                                "Listen failed: " + error.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    if (querySnapshot != null) {
                         employeeList.clear();
-                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                            String id = doc.getId();
-                            String name = doc.getString("name");
-                            // Optional fields – add null checks if needed
-                            String status = doc.getString("status"); // if you store attendance status
-                            String inTime = doc.getString("inTime");
-                            String outTime = doc.getString("outTime");
+                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                            String id         = doc.getId();
+                            String name       = doc.getString("name");
+                            String status     = doc.getString("status");
+                            String dutyStart  = doc.getString("inTime");
+                            String dutyOff    = doc.getString("outTime");
                             String breakStart = doc.getString("breakStart");
-                            String breakEnd = doc.getString("breakEnd");
+                            String breakEnd   = doc.getString("breakEnd");
+                            String phone      = doc.getString("phone");
+                            String address    = doc.getString("address");
 
-                            // Optional fields – add null checks if needed
-                            String phone = doc.getString("phone");
-                            String address = doc.getString("address");
-
-                            // Provide defaults if a field might be missing
                             Employee emp = new Employee(
                                     id,
                                     name != null ? name : "",
                                     status != null ? status : "—",
-                                    inTime != null ? inTime : "",
-                                    outTime != null ? outTime : "",
+                                    dutyStart != null ? dutyStart : "",
+                                    dutyOff != null ? dutyOff : "",
                                     breakStart != null ? breakStart : "",
                                     breakEnd != null ? breakEnd : "",
                                     phone != null ? phone : "",
                                     address != null ? address : "",
-                                    R.drawable.ic_person // Default photo
-
+                                    R.drawable.ic_person
                             );
                             employeeList.add(emp);
                         }
                         adapter.notifyDataSetChanged();
                     }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(EmployeeListActivity.this,
-                                "Failed to load employees: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();
-                    }
                 });
     }
+
 }

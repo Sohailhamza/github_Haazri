@@ -60,7 +60,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPresent"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"/>
 
     <TextView
@@ -73,6 +73,6 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAbsent"
         android:layout_width="match_parent"
-        android:layout_height="100dp"/>
+        android:layout_height="wrap_content"/>
 
 </LinearLayout>
