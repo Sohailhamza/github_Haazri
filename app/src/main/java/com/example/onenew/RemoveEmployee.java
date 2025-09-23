@@ -37,13 +37,23 @@ public class RemoveEmployee extends AppCompatActivity {
                 .addOnSuccessListener(qs -> {
                     employees.clear();
                     for (DocumentSnapshot d : qs) {
-                        String id   = d.getId();
-                        String name = d.getString("name");
-                        String phone   = d.getString("phone");
+                        String id      = d.getId();
+                        String name    = d.getString("name");
+                        String status  = d.getString("status");   // optional
                         String address = d.getString("address");
+                        String phone   = d.getString("phone");
 
-                        employees.add(new Employee(id, name, "", "", "", "", "",phone != null ? phone : "",
-                                address != null ? address : "", 0));
+
+
+                        employees.add(new Employee(
+                                id,
+                                name != null ? name : "",
+                                status != null ? status : "—",
+                                phone != null ? phone : "",
+                                address != null ? address : "",
+
+                                R.drawable.ic_person      // ya jo default photo aap use kar rahe hain
+                        ));
                     }
                     adapter.notifyDataSetChanged();
                 });

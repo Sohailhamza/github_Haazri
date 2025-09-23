@@ -48,6 +48,7 @@ public class RemoveEmployeeAdapter extends RecyclerView.Adapter<RemoveEmployeeAd
     static class EmpVH extends RecyclerView.ViewHolder {
         TextView txtName;
         ImageButton btnDelete;
+
         EmpVH(View v){
             super(v);
             txtName = v.findViewById(R.id.txtEmpName);

@@ -2,16 +2,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="0dp"
-    android:gravity="center_horizontal">
+    android:padding="0dp">
 
     <!-- Heading -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="47dp"
-        android:background="@color/green"
         android:layout_marginBottom="5dp"
+        android:background="@color/green"
         android:gravity="center"
         android:padding="5dp">
 
@@ -19,54 +19,57 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Employee Dashboard"
-            android:textSize="25sp"
             android:textColor="@color/white"
+            android:textSize="25sp"
             android:textStyle="bold" />
     </LinearLayout>
+
 
     <!-- Employee Name & ID -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingHorizontal="2dp"
         android:background="@color/white"
-        android:gravity="center">
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="2dp">
 
         <TextView
             android:id="@+id/tvName"
             android:layout_width="0dp"
             android:layout_height="40dp"
-            android:layout_weight="2"
+            android:layout_marginStart="5dp"
             android:layout_marginEnd="10dp"
-            android:text="Employee name"
+            android:layout_weight="2"
+            android:background="@color/white"
             android:gravity="center_vertical"
+            android:text="Employee name"
             android:textColor="@color/black"
             android:textSize="15sp"
-            android:layout_marginStart="5dp"
-            android:textStyle="bold"
-            android:background="@color/white" />
+            android:textStyle="bold" />
+
         <ImageView
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="2"
+            android:background="@color/white"
+            android:gravity="center"
             android:src="@drawable/applogo"
             android:textColor="@color/black"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:background="@color/white" />
+            android:textStyle="bold" />
+
         <TextView
             android:id="@+id/tvEmpId"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="2"
+            android:background="@color/white"
+            android:gravity="center"
+            android:padding="5dp"
             android:text="01"
             android:textColor="@color/black"
-            android:textStyle="bold"
-            android:gravity="center"
             android:textSize="15sp"
-            android:padding="5dp"
-            android:background="@color/white" />
+            android:textStyle="bold" />
 
     </LinearLayout>
     <!-- Current Date -->
@@ -74,13 +77,13 @@
         android:id="@+id/tvDate"
         android:layout_width="match_parent"
         android:layout_height="20dp"
-        android:text="Date: --/--/----"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:gravity="center"
         android:layout_marginTop="1dp"
-        android:layout_marginBottom="1dp" />
+        android:layout_marginBottom="1dp"
+        android:gravity="center"
+        android:text="Date: --/--/----"
+        android:textColor="@color/black"
+        android:textSize="10sp"
+        android:textStyle="bold" />
 
     <!-- Buttons -->
     <LinearLayout
@@ -93,127 +96,167 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="90dp"
-            android:orientation="horizontal"
+            android:layout_marginBottom="10dp"
             android:gravity="center"
-            android:layout_marginBottom="10dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/tvCheckIn"
                 android:layout_width="0dp"
                 android:layout_height="80dp"
-                android:layout_weight="1"
                 android:layout_marginEnd="10dp"
-                android:text="Check-In"
-                android:gravity="center"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
+                android:layout_weight="1"
                 android:background="@drawable/rounded_blue_button"
-                android:backgroundTint="@color/green" />
+                android:backgroundTint="@color/green"
+                android:gravity="center"
+                android:text="Check-In"
+                android:textColor="@color/white"
+                android:textSize="30sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/btnCheckOut"
                 android:layout_width="0dp"
                 android:layout_height="80dp"
                 android:layout_weight="1"
-                android:text="Check-Out"
-                android:gravity="center"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
                 android:background="@drawable/rounded_blue_button"
-                android:backgroundTint="@color/red" />
+                android:backgroundTint="@color/red"
+                android:gravity="center"
+                android:text="Check-Out"
+                android:textColor="@color/white"
+                android:textSize="30sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="90dp"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/btnStartBreak"
                 android:layout_width="0dp"
                 android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="10dp"
                 android:layout_marginStart="5dp"
-                android:text="Start Break"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/rounded_edittext"
+                android:backgroundTint="@null"
+                android:elevation="6dp"
                 android:gravity="center"
+                android:text="Start Break"
+                android:textColor="#01A40B"
                 android:textSize="30sp"
                 android:textStyle="bold"
-                android:textColor="#01A40B"
-                android:background="@drawable/rounded_edittext"
-                android:elevation="6dp"
-                android:translationZ="6dp"
-                android:backgroundTint="@null" />
+                android:translationZ="6dp" />
 
             <TextView
                 android:id="@+id/btnEndBreak"
                 android:layout_width="0dp"
                 android:layout_height="80dp"
-                android:layout_weight="1"
-                android:text="End Break"
-                android:gravity="center"
                 android:layout_marginEnd="5dp"
-                android:textStyle="bold"
-                android:textSize="30sp"
-                android:textColor="#F01907"
-                android:elevation="6dp"
-                android:translationZ="6dp"
+                android:layout_weight="1"
                 android:background="@drawable/rounded_edittext"
-                android:backgroundTint="@null" />
+                android:backgroundTint="@null"
+                android:elevation="6dp"
+                android:gravity="center"
+                android:text="End Break"
+                android:textColor="#F01907"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:translationZ="6dp" />
         </LinearLayout>
 
-        <!-- Duty Hour -->
-        <TextView
-            android:id="@+id/tvDHour"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Duty Hour:   "
-            android:textSize="20sp"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:padding="10dp"
-            android:background="@drawable/rounded_edittext" />
+            android:layout_height="wrap_content">
 
-        <!-- Break Duration -->
-        <TextView
-            android:id="@+id/tvBreakDuration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Break Duration:  "
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:padding="10dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/rounded_edittext" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="5dp">
 
-        <!-- ✅ Check-in/out times -->
-        <TextView
-            android:id="@+id/tvCheckInTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Check-In Time:  "
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:padding="10dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/rounded_edittext" />
 
-        <TextView
-            android:id="@+id/tvCheckOutTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Check-Out Time:  "
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:padding="10dp"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/rounded_edittext" />
+                <!-- Duty Hour -->
+                <TextView
+                    android:id="@+id/tvDHour"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_edittext"
+                    android:padding="10dp"
+                    android:text="Duty Hour:   "
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <!-- Break Duration -->
+                <TextView
+                    android:id="@+id/tvBreakDuration"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/rounded_edittext"
+                    android:padding="10dp"
+                    android:text="Break Duration:  "
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <!-- ✅ Check-in/out times -->
+                <TextView
+                    android:id="@+id/tvCheckInTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/rounded_edittext"
+                    android:padding="10dp"
+                    android:text="Check-In Time:  "
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvCheckOutTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/rounded_edittext"
+                    android:padding="10dp"
+                    android:text="Check-Out Time:  "
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvBreakStartTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/rounded_edittext"
+                    android:padding="10dp"
+                    android:text="Break-Start Time:  "
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvBreakEndTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:background="@drawable/rounded_edittext"
+                    android:padding="10dp"
+                    android:text="Break-End Time:  "
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </ScrollView>
+
 
     </LinearLayout>
+
 </LinearLayout>

@@ -14,8 +14,12 @@ public class EmployeeAttendance {
     public EmployeeAttendance() {} // Firestore ke liye empty constructor
 
     public EmployeeAttendance(String name, String employeeId,
-                              String status, String checkInTime,
-                              String checkOutTime, String breakStart, String breakEnd, long breakMillis,
+                              String status,
+                              String checkInTime,
+                              String checkOutTime,
+                              String breakStart, String breakEnd,
+
+                              long breakMillis,
                               long dutyMillis) {
         this.name = name;
         this.employeeId = employeeId;

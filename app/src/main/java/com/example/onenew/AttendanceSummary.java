@@ -20,11 +20,12 @@ import java.util.Locale;
 
 public class AttendanceSummary extends AppCompatActivity {
 
-    private TextView tvDate, tvPresentCount, tvAbsentCount, tvBreak, tvDuty, tvBreakStart, tvBreakEnd, tvIn, tvOut, tvName, tvId, tvStatus;
-    private RecyclerView rvPresent, rvAbsent;
+    private TextView tvDate, tvPresentCount, tvAbsentCount,
+            tvBreak, tvDuty, tvBreakStart, tvBreakEnd, tvIn, tvOut, tvName, tvId, tvStatus;
+    private RecyclerView rvPresent, rvAbsent, rvBreak, rvDuty, rvBreakStart, rvBreakEnd, rvIn, rvOut, rvName, rvId, rvStatus;
     private FirebaseFirestore db;
     private final List<EmployeeAttendance> presentList = new ArrayList<>();
-    private final List<EmployeeAttendance> absentList  = new ArrayList<>();
+    private final List<EmployeeAttendance> absentList = new ArrayList<>();
 
     private AttendanceAdapter presentAdapter, absentAdapter;
 
@@ -34,27 +35,27 @@ public class AttendanceSummary extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance_summary);
 
-        tvDate        = findViewById(R.id.tvDate);
-        tvPresentCount= findViewById(R.id.tvPresentCount);
+        tvDate = findViewById(R.id.tvDate);
+        tvPresentCount = findViewById(R.id.tvPresentCount);
         tvAbsentCount = findViewById(R.id.tvAbsentCount);
-        rvPresent     = findViewById(R.id.rvPresent);
-        rvAbsent      = findViewById(R.id.rvAbsent);
-        tvBreak       = findViewById(R.id.tvBreak);
-        tvDuty        = findViewById(R.id.tvDuty);
-        tvBreakStart  = findViewById(R.id.tvBreakStart);
-        tvBreakEnd    = findViewById(R.id.tvBreakEnd);
-        tvIn          = findViewById(R.id.tvIn);
-        tvOut         = findViewById(R.id.tvOut);
-        tvName        = findViewById(R.id.tvName);
-        tvId          = findViewById(R.id.tvId);
-        tvStatus      = findViewById(R.id.tvStatus);
+        rvPresent = findViewById(R.id.rvPresent);
+        rvAbsent = findViewById(R.id.rvAbsent);
+        tvBreak = findViewById(R.id.tvBreak);
+        tvDuty = findViewById(R.id.tvDuty);
+        tvBreakStart = findViewById(R.id.tvBreakStart);
+        tvBreakEnd = findViewById(R.id.tvBreakEnd);
+        tvIn = findViewById(R.id.tvIn);
+        tvOut = findViewById(R.id.tvOut);
+        tvName = findViewById(R.id.tvName);
+        tvId = findViewById(R.id.tvId);
+        tvStatus = findViewById(R.id.tvStatus);
 
 
         rvPresent.setLayoutManager(new LinearLayoutManager(this));
         rvAbsent.setLayoutManager(new LinearLayoutManager(this));
 
         presentAdapter = new AttendanceAdapter(presentList);
-        absentAdapter  = new AttendanceAdapter(absentList);
+        absentAdapter = new AttendanceAdapter(absentList);
         rvPresent.setAdapter(presentAdapter);
         rvAbsent.setAdapter(absentAdapter);
 

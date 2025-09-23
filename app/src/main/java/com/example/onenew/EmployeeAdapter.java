@@ -39,10 +39,10 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
         holder.tvName.setText(e.getName());
         holder.tvId.setText("ID: " + e.getId());
         holder.tvStatus.setText("Status: " + e.getStatus());
-        holder.tvDutyStart.setText("Duty S: " + e.getDutyStartTime());
-        holder.tvDutyOff.setText("Duty Off: " + e.getDutyOffTime());
-        holder.tvBreakStart.setText("Break S: " + e.getBreakStartTime());
-        holder.tvBreakEnd.setText("Break End: " + e.getBreakEndTime());
+//        holder.tvDutyStart.setText("Duty S: " + e.getDutyStartTime());
+//        holder.tvDutyOff.setText("Duty Off: " + e.getDutyOffTime());
+//        holder.tvBreakStart.setText("Break S: " + e.getBreakStartTime());
+//        holder.tvBreakEnd.setText("Break End: " + e.getBreakEndTime());
         holder.tvPhone.setText("Ph: " + e.getPhone());
         holder.tvAddress.setText("Address: " + e.getAddress());
 
@@ -73,10 +73,10 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
             tvName       = itemView.findViewById(R.id.tvEmployeeName);
             tvId         = itemView.findViewById(R.id.tvEmployeeId);
             tvStatus     = itemView.findViewById(R.id.tvEmployeeStatus);
-            tvDutyStart  = itemView.findViewById(R.id.tvDutyStart);
-            tvDutyOff    = itemView.findViewById(R.id.tvDutyOff);
-            tvBreakStart = itemView.findViewById(R.id.tvBreakStart);
-            tvBreakEnd   = itemView.findViewById(R.id.tvBreakEnd);
+//            tvDutyStart  = itemView.findViewById(R.id.tvDutyStart);
+//            tvDutyOff    = itemView.findViewById(R.id.tvDutyOff);
+//            tvBreakStart = itemView.findViewById(R.id.tvBreakStart);
+//            tvBreakEnd   = itemView.findViewById(R.id.tvBreakEnd);
             tvPhone      = itemView.findViewById(R.id.tvEmployeePhone);
             tvAddress    = itemView.findViewById(R.id.tvEmployeeAddress);
         }

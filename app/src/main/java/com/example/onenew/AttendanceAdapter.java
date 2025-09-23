@@ -30,7 +30,7 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.Ho
     @Override
     public void onBindViewHolder(@NonNull Holder h, int pos) {
         EmployeeAttendance e = items.get(pos);
-        h.tvName.setText("Name: " + safe(e.name));
+        h.tvName.setText(safe(e.name));
         h.tvId.setText("ID: " + safe(e.employeeId));
         h.tvStatus.setText("Status: " + safe(e.status));
         h.tvIn.setText("Check-In: " + safe(e.checkInTime));

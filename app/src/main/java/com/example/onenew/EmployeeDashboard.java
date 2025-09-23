@@ -34,7 +34,7 @@ import java.util.Map;
 
 public class EmployeeDashboard extends AppCompatActivity {
 
-    private static final int PERMISSION_CAMERA   = 200;
+    private static final int PERMISSION_CAMERA = 200;
     private static final int PERMISSION_LOCATION = 201;
 
     // === UI ===
@@ -69,11 +69,13 @@ public class EmployeeDashboard extends AppCompatActivity {
     private static final double OFFICE4_LAT = 30.8768576;
     private static final double OFFICE4_LNG = 73.5926216;
 
-    private static final float  ALLOWED_RADIUS_METERS = 1000f;
+    private static final float ALLOWED_RADIUS_METERS = 1000f;
 
     private FusedLocationProviderClient fusedClient;
 
-    /** Camera launcher returning a Bitmap thumbnail */
+    /**
+     * Camera launcher returning a Bitmap thumbnail
+     */
     private final ActivityResultLauncher<Void> cameraLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicturePreview(),
                     bitmap -> {
@@ -98,23 +100,23 @@ public class EmployeeDashboard extends AppCompatActivity {
         fusedClient = LocationServices.getFusedLocationProviderClient(this);
 
         // ---- Bind Views ----
-        tvName          = findViewById(R.id.tvName);
-        tvEmpId         = findViewById(R.id.tvEmpId);
-        tvDutyHour      = findViewById(R.id.tvDHour);
+        tvName = findViewById(R.id.tvName);
+        tvEmpId = findViewById(R.id.tvEmpId);
+        tvDutyHour = findViewById(R.id.tvDHour);
         tvBreakDuration = findViewById(R.id.tvBreakDuration);
-        tvCheckInBtn    = findViewById(R.id.tvCheckIn);
-        btnCheckOut     = findViewById(R.id.btnCheckOut);
-        btnStartBreak   = findViewById(R.id.btnStartBreak);
-        btnEndBreak     = findViewById(R.id.btnEndBreak);
-        tvDate          = findViewById(R.id.tvDate);
-        tvCheckInTime   = findViewById(R.id.tvCheckInTime);
-        tvCheckOutTime  = findViewById(R.id.tvCheckOutTime);
+        tvCheckInBtn = findViewById(R.id.tvCheckIn);
+        btnCheckOut = findViewById(R.id.btnCheckOut);
+        btnStartBreak = findViewById(R.id.btnStartBreak);
+        btnEndBreak = findViewById(R.id.btnEndBreak);
+        tvDate = findViewById(R.id.tvDate);
+        tvCheckInTime = findViewById(R.id.tvCheckInTime);
+        tvCheckOutTime = findViewById(R.id.tvCheckOutTime);
 
         // ---- Show name/ID from Login ----
-        String empId   = getIntent().getStringExtra("empId");
+        String empId = getIntent().getStringExtra("empId");
         String empName = getIntent().getStringExtra("empName");
         tvName.setText(empName != null ? empName : "Employee");
-        tvEmpId.setText(empId   != null ? empId   : "ID");
+        tvEmpId.setText(empId != null ? empId : "ID");
 
         // ---- Show today's date ----
         String today = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
@@ -132,12 +134,14 @@ public class EmployeeDashboard extends AppCompatActivity {
         btnEndBreak.setOnClickListener(v -> attemptAction(this::handleEndBreak));
     }
 
-    /** Restore saved times when app reopens */
+    /**
+     * Restore saved times when app reopens
+     */
     @SuppressLint("SetTextI18n")
     private void restoreSavedState() {
-        checkInTime      = prefs.getLong("checkInTime", 0L);
+        checkInTime = prefs.getLong("checkInTime", 0L);
         totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
-        breakStartTime   = prefs.getLong("breakStartTime", 0L);
+        breakStartTime = prefs.getLong("breakStartTime", 0L);
 
         if (checkInTime != 0L) {
             tvCheckInTime.setText("Check-In Time: " +
@@ -269,8 +273,8 @@ public class EmployeeDashboard extends AppCompatActivity {
         builder.setView(dialogView);
 
         dialogImagePreview = dialogView.findViewById(R.id.imagePreview);
-        Button btnCapture  = dialogView.findViewById(R.id.btnCapture);
-        btnSave            = dialogView.findViewById(R.id.btnSave);
+        Button btnCapture = dialogView.findViewById(R.id.btnCapture);
+        btnSave = dialogView.findViewById(R.id.btnSave);
         btnSave.setEnabled(false);
 
         dialog = builder.create();
@@ -370,7 +374,9 @@ public class EmployeeDashboard extends AppCompatActivity {
         }
     }
 
-    /**  Don't kill the task; just move to background  */
+    /**
+     * Don't kill the task; just move to background
+     */
     @SuppressLint("GestureBackNavigation")
     @Override
     public void onBackPressed() {

@@ -46,6 +46,8 @@ public class EmployeeListActivity extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     private void fetchEmployees() {
         db.collection("employees")
+//                .document("employee")
+//                .collection("records")
                 .addSnapshotListener((querySnapshot, error) -> {
                     if (error != null) {
                         Toast.makeText(EmployeeListActivity.this,
@@ -59,10 +61,10 @@ public class EmployeeListActivity extends AppCompatActivity {
                             String id         = doc.getId();
                             String name       = doc.getString("name");
                             String status     = doc.getString("status");
-                            String dutyStart  = doc.getString("inTime");
-                            String dutyOff    = doc.getString("outTime");
-                            String breakStart = doc.getString("breakStart");
-                            String breakEnd   = doc.getString("breakEnd");
+//                            String dutyStart  = doc.getString("inTime");
+//                            String dutyOff    = doc.getString("outTime");
+//                            String breakStart = doc.getString("breakStart");
+//                            String breakEnd   = doc.getString("breakEnd");
                             String phone      = doc.getString("phone");
                             String address    = doc.getString("address");
 
@@ -70,10 +72,10 @@ public class EmployeeListActivity extends AppCompatActivity {
                                     id,
                                     name != null ? name : "",
                                     status != null ? status : "—",
-                                    dutyStart != null ? dutyStart : "",
-                                    dutyOff != null ? dutyOff : "",
-                                    breakStart != null ? breakStart : "",
-                                    breakEnd != null ? breakEnd : "",
+//                                    dutyStart != null ? dutyStart : "",
+//                                    dutyOff != null ? dutyOff : "",
+//                                    breakStart != null ? breakStart : "",
+//                                    breakEnd != null ? breakEnd : "",
                                     phone != null ? phone : "",
                                     address != null ? address : "",
                                     R.drawable.ic_person
