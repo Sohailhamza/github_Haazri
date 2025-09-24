@@ -3,10 +3,16 @@ package com.example.onenew;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -14,9 +20,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -24,29 +32,36 @@ import androidx.core.content.ContextCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Employee Dashboard with:
+ * 1. Location check at End-Break
+ * 2. Automatic checkout 11:58 PM
+ * 3. Single Check-In/Out per day
+ */
 public class EmployeeDashboard extends AppCompatActivity {
 
-    private static final int PERMISSION_CAMERA   = 200;
+    private static final int PERMISSION_CAMERA = 200;
     private static final int PERMISSION_LOCATION = 201;
 
-    // === UI ===
     private TextView tvName, tvEmpId, tvDutyHour, tvBreakDuration,
             tvCheckInBtn, btnCheckOut, btnStartBreak, btnEndBreak,
             tvDate, tvCheckInTime, tvCheckOutTime, tvBreakStartTime, tvBreakEndTime;
+
     private AlertDialog dialog;
     private ImageView dialogImagePreview;
     private Button btnSave;
     private Bitmap capturedImage;
 
-    // === Time tracking ===
     private long checkInTime = 0L;
     private long breakStartTime = 0L;
     private long totalBreakMillis = 0L;
@@ -54,18 +69,14 @@ public class EmployeeDashboard extends AppCompatActivity {
     private SharedPreferences prefs;
     private FusedLocationProviderClient fusedClient;
 
-    // Allowed office locations
     private static final double[][] OFFICES = {
-            {30.6484947, 73.1070595},  // Office 1
-            {30.8049604, 73.4380137},  // Home Mart Okara
-            {30.6703321, 73.1276480},  // TBZ
-            {30.8768576, 73.5926216}   // Home Mart Renala
+            {30.6484947, 73.1070595},
+            {30.8049604, 73.4380137},
+            {30.6703321, 73.1276480},
+            {30.8768576, 73.5926216}
     };
     private static final float ALLOWED_RADIUS_METERS = 1000f;
 
-    /**
-     * Camera launcher returning a Bitmap thumbnail
-     */
     private final ActivityResultLauncher<Void> cameraLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicturePreview(),
                     bitmap -> {
@@ -80,7 +91,6 @@ public class EmployeeDashboard extends AppCompatActivity {
                         }
                     });
 
-    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,7 +99,15 @@ public class EmployeeDashboard extends AppCompatActivity {
         prefs = getSharedPreferences("attendance_prefs", MODE_PRIVATE);
         fusedClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // ---- Bind Views ----
+        bindViews();
+        showToday();
+        restoreSavedState();
+        checkFirestoreForToday();      // ensure 1 check-in/out per day
+        scheduleAutoCheckout();        // 11:58 PM auto-checkout
+        setClickListeners();
+    }
+
+    private void bindViews() {
         tvName = findViewById(R.id.tvName);
         tvEmpId = findViewById(R.id.tvEmpId);
         tvDutyHour = findViewById(R.id.tvDHour);
@@ -104,50 +122,98 @@ public class EmployeeDashboard extends AppCompatActivity {
         tvBreakStartTime = findViewById(R.id.tvBreakStartTime);
         tvBreakEndTime = findViewById(R.id.tvBreakEndTime);
 
-        // ---- Show name/ID from Login ----
-        String empId   = getIntent().getStringExtra("empId");   // ✅ one consistent key
+        String empId = getIntent().getStringExtra("empId");
         String empName = getIntent().getStringExtra("empName");
-        tvName.setText(empName != null ? empName : "Employee");
         tvEmpId.setText(empId != null ? empId : "ID");
+        tvName.setText(empName != null ? empName : "Employee");
+    }
 
-        // ---- Show today's date ----
+    private void showToday() {
         String today = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault()).format(new Date());
         tvDate.setText(today);
+    }
 
-        // Restore saved times if app reopens
-        restoreSavedState();
+    @SuppressLint("SetTextI18n")
+    private void restoreSavedState() {
+        checkInTime = prefs.getLong("checkInTime", 0L);
+        breakStartTime = prefs.getLong("breakStartTime", 0L);
+        totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
 
-        // ---- Click Listeners ----
+        if (checkInTime != 0)
+            tvCheckInTime.setText("Check-In Time: " + formatTime(checkInTime));
+        if (breakStartTime != 0)
+            tvBreakStartTime.setText("Break-Start Time: " + formatTime(breakStartTime));
+    }
+
+    private void setClickListeners() {
         tvCheckInBtn.setOnClickListener(v -> attemptAction(this::handleCheckIn));
         btnCheckOut.setOnClickListener(v -> attemptAction(this::handleCheckOut));
         btnStartBreak.setOnClickListener(v -> attemptAction(this::handleStartBreak));
+        // End break now requires location check again
         btnEndBreak.setOnClickListener(v -> attemptAction(this::handleEndBreak));
     }
 
-    /** Restore saved times when app reopens */
-    @SuppressLint("SetTextI18n")
-    private void restoreSavedState() {
-        checkInTime    = prefs.getLong("checkInTime", 0L);
-        totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
-        breakStartTime = prefs.getLong("breakStartTime", 0L);
+    /**
+     * Ensure single check-in/out per day
+     */
+    private void checkFirestoreForToday() {
+        String id = tvEmpId.getText().toString();
+        if (id.isEmpty()) return;
+        String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
-        if (checkInTime != 0L) {
-            tvCheckInTime.setText("Check-In Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(checkInTime)));
-        }
-        if (breakStartTime != 0L) {
-            tvBreakStartTime.setText("Break-Start Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(breakStartTime)));
-        }
+        FirebaseFirestore.getInstance()
+                .collection("attendance")
+                .document(todayId)
+                .collection("records")
+                .document(id)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        if (doc.contains("checkInTime")) tvCheckInBtn.setEnabled(false);
+                        if (doc.contains("checkOutTime")) btnCheckOut.setEnabled(false);
+                    }
+                });
     }
 
-    /*--------------------------------------------------
-     *   Attendance Logic
-     *--------------------------------------------------*/
-    @SuppressLint("SetTextI18n")
+    /**
+     * Schedules automatic checkout at 11:58 PM
+     */
+    private void scheduleAutoCheckout() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 58);
+        cal.set(Calendar.SECOND, 0);
+        if (cal.getTimeInMillis() < System.currentTimeMillis()) {
+            // already past for today; schedule for tomorrow
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+        }
+        long trigger = cal.getTimeInMillis();
+        long delay = trigger - System.currentTimeMillis();
+
+        new Handler(getMainLooper()).postDelayed(this::autoCheckout, delay);
+    }
+
+    /**
+     * Automatic checkout logic
+     */
+    private void autoCheckout() {
+        if (checkInTime == 0) return; // no active duty
+
+        // End any running break first
+        if (breakStartTime != 0) {
+            long end = System.currentTimeMillis();
+            totalBreakMillis += end - breakStartTime;
+            breakStartTime = 0;
+        }
+        handleCheckOut();
+        Toast.makeText(this, "Auto checked out at 11:58 PM", Toast.LENGTH_LONG).show();
+    }
+
+    /* ---------- Attendance Methods ---------- */
+
     private void handleCheckIn() {
         if (checkInTime != 0) {
-            Toast.makeText(this, "Already checked in", Toast.LENGTH_SHORT).show();
+            toast("Already checked in");
             return;
         }
 
@@ -155,39 +221,33 @@ public class EmployeeDashboard extends AppCompatActivity {
             checkInTime = System.currentTimeMillis();
             prefs.edit().putLong("checkInTime", checkInTime).apply();
 
-            tvCheckInTime.setText("Check-In Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(checkInTime)));
+            tvCheckInTime.setText("Check-In Time: " + formatTime(checkInTime));
 
             String id = tvEmpId.getText().toString();
             if (id.isEmpty()) {
-                Toast.makeText(this, "Employee ID missing!", Toast.LENGTH_SHORT).show();
+                toast("Employee ID missing!");
                 return;
             }
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+            String todayId = todayDoc();
+            Map<String, Object> data = new HashMap<>();
+            data.put("employeeId", id);
+            data.put("name", tvName.getText().toString());
+            data.put("status", "Present");
+            data.put("checkInTime", timeForDb(checkInTime));
 
-            Map<String, Object> checkInData = new HashMap<>();
-            checkInData.put("employeeId", id);
-            checkInData.put("name", tvName.getText().toString());
-            checkInData.put("status", "Present");
-            checkInData.put("checkInTime",
-                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(checkInTime)));
-
-            db.collection("attendance")
-                    .document(todayId)
-                    .collection("records")
-                    .document(id)
-                    .set(checkInData)
-                    .addOnSuccessListener(a -> Toast.makeText(this, "Attendance saved", Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(e -> Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            FirebaseFirestore.getInstance()
+                    .collection("attendance").document(todayId)
+                    .collection("records").document(id)
+                    .set(data)
+                    .addOnSuccessListener(a -> toast("Attendance saved"))
+                    .addOnFailureListener(e -> toast("Error: " + e.getMessage()));
         });
     }
 
-    @SuppressLint("SetTextI18n")
     private void handleCheckOut() {
         if (checkInTime == 0) {
-            Toast.makeText(this, "Check in first", Toast.LENGTH_SHORT).show();
+            toast("Check in first");
             return;
         }
 
@@ -196,160 +256,171 @@ public class EmployeeDashboard extends AppCompatActivity {
 
         tvDutyHour.setText("Duty Hour: " + formatMillis(dutyMillis));
         tvBreakDuration.setText("Break Duration: " + formatMillis(totalBreakMillis));
-        tvCheckOutTime.setText("Check-Out Time: " +
-                new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(now)));
+        tvCheckOutTime.setText("Check-Out Time: " + formatTime(now));
 
         String id = tvEmpId.getText().toString();
         if (id.isEmpty()) return;
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-
         Map<String, Object> update = new HashMap<>();
-        update.put("checkOutTime", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
+        update.put("checkOutTime", timeForDb(now));
         update.put("dutyMillis", dutyMillis);
         update.put("breakMillis", totalBreakMillis);
         update.put("status", "CheckedOut");
 
-        db.collection("attendance")
-                .document(todayId)
-                .collection("records")
-                .document(id)
+        FirebaseFirestore.getInstance()
+                .collection("attendance").document(todayDoc())
+                .collection("records").document(id)
                 .update(update)
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> toast("Firestore Update Error: " + e.getMessage()));
 
-        // reset stored values
-        prefs.edit()
-                .putLong("checkInTime", 0L)
-                .putLong("totalBreakMillis", 0L)
-                .putLong("breakStartTime", 0L)
-                .apply();
-        checkInTime = totalBreakMillis = breakStartTime = 0L;
+        // Reset local state
+        prefs.edit().clear().apply();
+        checkInTime = breakStartTime = totalBreakMillis = 0L;
+        tvCheckInBtn.setEnabled(false);
+        btnCheckOut.setEnabled(false);
     }
 
     private void handleStartBreak() {
         if (checkInTime == 0) {
-            Toast.makeText(this, "Check in first", Toast.LENGTH_SHORT).show();
+            toast("Check in first");
             return;
         }
         if (breakStartTime != 0) {
-            Toast.makeText(this, "Already on break", Toast.LENGTH_SHORT).show();
+            toast("Already on break");
             return;
         }
+
         breakStartTime = System.currentTimeMillis();
         prefs.edit().putLong("breakStartTime", breakStartTime).apply();
 
-        String id = tvEmpId.getText().toString();
-        if (!id.isEmpty()) {
-            FirebaseFirestore.getInstance()
-                    .collection("employees")
-                    .document(id)
-                    .update("breakStartTime", breakStartTime)
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Failed to update break start", Toast.LENGTH_SHORT).show());
-        }
-
-        tvBreakStartTime.setText("Break-Start Time: " +
-                new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(breakStartTime)));
-        Toast.makeText(this, "Break Started", Toast.LENGTH_SHORT).show();
+        tvBreakStartTime.setText("Break-Start Time: " + formatTime(breakStartTime));
+        toast("Break Started");
     }
 
-    @SuppressLint("SetTextI18n")
+    /**
+     * End break with extra location check
+     */
+    @RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
     private void handleEndBreak() {
         if (breakStartTime == 0) {
-            Toast.makeText(this, "No active break", Toast.LENGTH_SHORT).show();
+            toast("No active break");
             return;
         }
-        long end = System.currentTimeMillis();
-        totalBreakMillis += end - breakStartTime;
-        prefs.edit()
-                .putLong("totalBreakMillis", totalBreakMillis)
-                .putLong("breakStartTime", 0L)
-                .apply();
-
-        String id = tvEmpId.getText().toString();
-        if (!id.isEmpty()) {
-            FirebaseFirestore.getInstance()
-                    .collection("employees")
-                    .document(id)
-                    .update("breakEndTime", end,
-                            "breakMillis", totalBreakMillis)
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Failed to update break end", Toast.LENGTH_SHORT).show());
-        }
-
-        tvBreakEndTime.setText("Break-End Time: " +
-                new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(end)));
-        breakStartTime = 0;
-        Toast.makeText(this, "Break Ended", Toast.LENGTH_SHORT).show();
-    }
-
-    private String formatMillis(long ms) {
-        long hrs = ms / (1000 * 60 * 60);
-        long mins = (ms / (1000 * 60)) % 60;
-        return hrs + "h " + mins + "m";
-    }
-
-    /*--------------------------------------------------
-     *   Camera Selfie Dialog
-     *--------------------------------------------------*/
-    private void showCaptureDialog(Runnable onSuccess) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_capture, null);
-        builder.setView(dialogView);
-
-        dialogImagePreview = dialogView.findViewById(R.id.imagePreview);
-        Button btnCapture = dialogView.findViewById(R.id.btnCapture);
-        btnSave = dialogView.findViewById(R.id.btnSave);
-        btnSave.setEnabled(false);
-
-        dialog = builder.create();
-        dialog.show();
-
-        btnCapture.setOnClickListener(v -> {
-            if (checkCameraPermission()) cameraLauncher.launch(null);
-        });
-
-        btnSave.setOnClickListener(v -> {
-            if (capturedImage != null) {
-                dialog.dismiss();
-                onSuccess.run();
-            } else {
-                Toast.makeText(this, "Capture a selfie first!", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    /*--------------------------------------------------
-     *   Permissions & Location
-     *--------------------------------------------------*/
-    private void attemptAction(Runnable action) {
-        if (!checkLocationPermission()) return;
 
         fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(loc -> {
                     if (loc == null) {
-                        Toast.makeText(this, "Location unavailable. Try again.", Toast.LENGTH_SHORT).show();
+                        toast("Location unavailable");
                         return;
                     }
 
-                    boolean insideAllowed = false;
+                    boolean inside = false;
+                    for (double[] o : OFFICES) {
+                        float[] dist = new float[1];
+                        Location.distanceBetween(
+                                loc.getLatitude(), loc.getLongitude(), o[0], o[1], dist);
+                        if (dist[0] <= ALLOWED_RADIUS_METERS) {
+                            inside = true;
+                            break;
+                        }
+                    }
+                    if (!inside) {
+                        toast("Not in allowed location");
+                        return;
+                    }
+
+                    long end = System.currentTimeMillis();
+                    totalBreakMillis += end - breakStartTime;
+                    prefs.edit()
+                            .putLong("totalBreakMillis", totalBreakMillis)
+                            .putLong("breakStartTime", 0L)
+                            .apply();
+
+                    tvBreakEndTime.setText("Break-End Time: " + formatTime(end));
+                    breakStartTime = 0;
+
+                    String id = tvEmpId.getText().toString();
+                    if (!id.isEmpty()) {
+                        FirebaseFirestore.getInstance()
+                                .collection("attendance").document(todayDoc())
+                                .collection("records").document(id)
+                                .update("breakEndTime", timeForDb(end),
+                                        "breakMillis", totalBreakMillis)
+                                .addOnFailureListener(e -> toast("Failed to update break end"));
+                    }
+                    toast("Break Ended");
+                })
+                .addOnFailureListener(e -> toast("Location error: " + e.getMessage()));
+    }
+
+    /* ---------- Helpers ---------- */
+
+    private String todayDoc() {
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+    }
+
+    private String timeForDb(long ms) {
+        return new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(ms));
+    }
+
+    private String formatTime(long ms) {
+        return new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(ms));
+    }
+
+    private String formatMillis(long ms) {
+        long h = ms / (1000 * 60 * 60);
+        long m = (ms / (1000 * 60)) % 60;
+        return h + "h " + m + "m";
+    }
+
+    private void toast(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    }
+
+    private void showCaptureDialog(Runnable onSuccess) {
+        AlertDialog.Builder b = new AlertDialog.Builder(this);
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_capture, null);
+        b.setView(v);
+        dialogImagePreview = v.findViewById(R.id.imagePreview);
+        Button btnCapture = v.findViewById(R.id.btnCapture);
+        btnSave = v.findViewById(R.id.btnSave);
+        btnSave.setEnabled(false);
+        dialog = b.create();
+        dialog.show();
+
+        btnCapture.setOnClickListener(x -> {
+            if (checkCameraPermission()) cameraLauncher.launch(null);
+        });
+        btnSave.setOnClickListener(x -> {
+            if (capturedImage != null) {
+                dialog.dismiss();
+                onSuccess.run();
+            } else toast("Capture a selfie first!");
+        });
+    }
+
+    private void attemptAction(Runnable action) {
+        if (!checkLocationPermission()) return;
+        fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(loc -> {
+                    if (loc == null) {
+                        toast("Location unavailable");
+                        return;
+                    }
+                    boolean inside = false;
                     for (double[] o : OFFICES) {
                         float[] dist = new float[1];
                         android.location.Location.distanceBetween(
                                 loc.getLatitude(), loc.getLongitude(), o[0], o[1], dist);
                         if (dist[0] <= ALLOWED_RADIUS_METERS) {
-                            insideAllowed = true;
+                            inside = true;
                             break;
                         }
                     }
-
-                    if (insideAllowed) action.run();
-                    else Toast.makeText(this, "You are not at an allowed office location!", Toast.LENGTH_LONG).show();
+                    if (inside) action.run();
+                    else toast("You are not at an allowed location!");
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Location error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> toast("Location error: " + e.getMessage()));
     }
 
     private boolean checkCameraPermission() {
@@ -377,12 +448,12 @@ public class EmployeeDashboard extends AppCompatActivity {
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_CAMERA || requestCode == PERMISSION_LOCATION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission granted. Try again.", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Permission denied.", Toast.LENGTH_SHORT).show();
-            }
+        if ((requestCode == PERMISSION_CAMERA || requestCode == PERMISSION_LOCATION)
+                && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            toast("Permission granted. Try again.");
+        } else {
+            toast("Permission denied.");
         }
     }
 
