@@ -40,7 +40,7 @@ public class EmployeeListActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         fetchEmployees(); // yeh call
-        
+
     }
 
     @SuppressLint("NotifyDataSetChanged")

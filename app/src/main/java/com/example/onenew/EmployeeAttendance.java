@@ -10,11 +10,6 @@ public class EmployeeAttendance {
     public String breakEnd;
     public long breakMillis;
     public long dutyMillis;
-    public long breakEndTime;
-    public long breakStartTime;
-    public long checkOutMillis;
-    public long checkInMillis;
-
 
     public EmployeeAttendance() {} // Firestore ke liye empty constructor
 
@@ -23,7 +18,6 @@ public class EmployeeAttendance {
                               String checkInTime,
                               String checkOutTime,
                               String breakStart, String breakEnd,
-
 
                               long breakMillis,
                               long dutyMillis) {
@@ -36,7 +30,5 @@ public class EmployeeAttendance {
         this.breakEnd = breakEnd;
         this.breakMillis = breakMillis;
         this.dutyMillis = dutyMillis;
-
-
     }
 }

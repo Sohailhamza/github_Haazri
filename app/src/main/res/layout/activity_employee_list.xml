@@ -1,13 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="2dp">
+
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:singleLine="true"
+        android:background="@drawable/edittext_bg"
+        android:queryHint="Search employee…"
+        android:iconifiedByDefault="false"
+        app:iconifiedByDefault="false"
+        android:padding="5dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerEmployees"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:dividerHeight="8dp"
-        android:scrollbars="vertical"/>
+        android:layout_marginTop="5dp"
+        android:scrollbars="vertical" />
+
 </LinearLayout>
