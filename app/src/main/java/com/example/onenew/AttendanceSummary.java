@@ -1,6 +1,7 @@
 package com.example.onenew;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +15,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -65,7 +67,32 @@ public class AttendanceSummary extends AppCompatActivity {
         tvDate.setText("Attendance: " + today);
 
         loadSummary(today);
+
+        tvDate.setOnClickListener(v -> {
+            // current date ko default rakhein
+            final Calendar cal = Calendar.getInstance();
+            int year  = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day   = cal.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog dlg = new DatePickerDialog(
+                    AttendanceSummary.this,
+                    (view, y, m, d) -> {
+                        // user ne jo date choose ki uska yyyy-MM-dd format banao
+                        String chosen = String.format(Locale.getDefault(),
+                                "%04d-%02d-%02d", y, m + 1, d);
+
+                        tvDate.setText("Attendance: " + chosen);
+                        loadSummary(chosen);   // 🔑 Firestore se nayi date ka data
+                    },
+                    year, month, day
+            );
+            dlg.show();
+        });
+
     }
+
+
 
     private void loadSummary(String dateKey) {
         // `attendance/dateKey/employees` collection structure

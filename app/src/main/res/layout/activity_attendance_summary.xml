@@ -14,7 +14,12 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/black"
-        android:layout_marginBottom="2dp" />
+        android:layout_marginBottom="2dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        />
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,6 +33,7 @@
         <TextView
             android:id="@+id/tvPresentCount"
             android:layout_width="0dp"
+            android:gravity="center"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Present:  0"
@@ -38,6 +44,7 @@
         <TextView
             android:id="@+id/tvAbsentCount"
             android:layout_width="0dp"
+            android:gravity="center"
             android:textColor="@color/red"
             android:layout_weight="1"
             android:layout_height="wrap_content"
