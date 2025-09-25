@@ -69,7 +69,7 @@ public class EmployeeDashboard extends AppCompatActivity {
     private static final double OFFICE4_LAT = 30.8768576;
     private static final double OFFICE4_LNG = 73.5926216;
 
-    private static final float ALLOWED_RADIUS_METERS = 1000f;
+    private static final float ALLOWED_RADIUS_METERS = 500f;
 
     private FusedLocationProviderClient fusedClient;
 
@@ -132,6 +132,7 @@ public class EmployeeDashboard extends AppCompatActivity {
         btnCheckOut.setOnClickListener(v -> attemptAction(this::handleCheckOut));
         btnStartBreak.setOnClickListener(v -> attemptAction(this::handleStartBreak));
         btnEndBreak.setOnClickListener(v -> attemptAction(this::handleEndBreak));
+
     }
 
     /**
