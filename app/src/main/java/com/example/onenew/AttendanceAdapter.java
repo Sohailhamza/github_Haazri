@@ -1,5 +1,7 @@
 package com.example.onenew;
 
+import static androidx.core.util.TimeUtils.formatDuration;
+
 import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
+import java.util.Locale;
 
 public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.Holder> {
 
@@ -37,9 +40,28 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.Ho
         h.tvOut.setText("Check-Out: " + safe(e.checkOutTime));
         h.tvBreakStart.setText("Break Start: " + safe(e.breakStart));
         h.tvBreakEnd.setText("Break End: " + safe(e.breakEnd));
-        h.tvBreak.setText("Break Duration: " + (e.breakMillis / 1000) + " sec");
-        h.tvDuty.setText("Duty Duration: " + (e.dutyMillis / 1000) + " sec");
+        h.tvBreak.setText("Break Duration: " + formatDuration(e.breakMillis));
+        h.tvDuty.setText("Duty Duration: " + formatDuration(e.dutyMillis));
+
     }
+    private String formatDuration(long millis) {
+        long totalSeconds = millis / 1000;
+        long hours   = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return String.format(Locale.getDefault(),
+                    "%d hr %d min %d sec", hours, minutes, seconds);
+        } else if (minutes > 0) {
+            return String.format(Locale.getDefault(),
+                    "%d min %d sec", minutes, seconds);
+        } else {
+            return String.format(Locale.getDefault(),
+                    "%d sec", seconds);
+        }
+    }
+
 
     private String safe(String s) {
         return s == null ? "—" : s;

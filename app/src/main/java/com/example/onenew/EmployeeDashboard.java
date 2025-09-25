@@ -41,6 +41,7 @@ public class EmployeeDashboard extends AppCompatActivity {
     private TextView tvName, tvEmpId, tvDutyHour, tvBreakDuration,
             tvCheckInBtn, btnCheckOut, btnStartBreak, btnEndBreak,
             tvDate, tvCheckInTime, tvCheckOutTime;
+    private TextView tvBreakStartTime, tvBreakEndTime;
     private AlertDialog dialog;
     private ImageView dialogImagePreview;
     private Button btnSave;
@@ -69,7 +70,7 @@ public class EmployeeDashboard extends AppCompatActivity {
     private static final double OFFICE4_LAT = 30.8768576;
     private static final double OFFICE4_LNG = 73.5926216;
 
-    private static final float ALLOWED_RADIUS_METERS = 500f;
+    private static final float ALLOWED_RADIUS_METERS = 300f;
 
     private FusedLocationProviderClient fusedClient;
 
@@ -112,6 +113,8 @@ public class EmployeeDashboard extends AppCompatActivity {
         tvCheckInTime = findViewById(R.id.tvCheckInTime);
         tvCheckOutTime = findViewById(R.id.tvCheckOutTime);
 
+        tvBreakStartTime = findViewById(R.id.tvBreakStartTime);
+        tvBreakEndTime   = findViewById(R.id.tvBreakEndTime);
         // ---- Show name/ID from Login ----
         String empId = getIntent().getStringExtra("empId");
         String empName = getIntent().getStringExtra("empName");
@@ -132,7 +135,6 @@ public class EmployeeDashboard extends AppCompatActivity {
         btnCheckOut.setOnClickListener(v -> attemptAction(this::handleCheckOut));
         btnStartBreak.setOnClickListener(v -> attemptAction(this::handleStartBreak));
         btnEndBreak.setOnClickListener(v -> attemptAction(this::handleEndBreak));
-
     }
 
     /**
@@ -144,6 +146,7 @@ public class EmployeeDashboard extends AppCompatActivity {
         totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
         breakStartTime = prefs.getLong("breakStartTime", 0L);
 
+
         if (checkInTime != 0L) {
             tvCheckInTime.setText("Check-In Time: " +
                     new SimpleDateFormat(" hh:mm a", Locale.getDefault())
@@ -151,6 +154,15 @@ public class EmployeeDashboard extends AppCompatActivity {
         }
         if (breakStartTime != 0L) {
             Toast.makeText(this, "Break in progress", Toast.LENGTH_SHORT).show();
+        }
+
+        if (prefs.getLong("breakStartTime",0L) != 0L) {
+            tvBreakStartTime.setText("Break-Start Time: " +
+                    new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            .format(new Date(prefs.getLong("breakStartTime",0L))));
+        }
+        if (prefs.getLong("totalBreakMillis",0L) > 0L) {
+            // optional: show last break end if you store it
         }
     }
 
@@ -179,6 +191,7 @@ public class EmployeeDashboard extends AppCompatActivity {
             checkInData.put("checkInTime",
                     new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(checkInTime)));
 
+
             db.collection("attendance")
                     .document(todayId)
                     .collection("records")
@@ -206,10 +219,11 @@ public class EmployeeDashboard extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         Map<String, Object> update = new HashMap<>();
-        update.put("checkOutTime",
-                new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
+        update.put("checkOutTime", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
         update.put("dutyMillis", dutyMillis);
         update.put("breakMillis", totalBreakMillis);
+        update.put("breakStart", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(breakStartTime)));
+        update.put("breakEnd", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
         update.put("status", "CheckedOut");
 
         db.collection("attendance")
@@ -234,31 +248,44 @@ public class EmployeeDashboard extends AppCompatActivity {
     private void handleStartBreak() {
         if (checkInTime == 0) {
             Toast.makeText(this, "Check in first", Toast.LENGTH_SHORT).show();
-            return;
-        }
+             return; }
         if (breakStartTime != 0) {
-            Toast.makeText(this, "Already on break", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Break already in progress", Toast.LENGTH_SHORT).show();
             return;
         }
+
         breakStartTime = System.currentTimeMillis();
         prefs.edit().putLong("breakStartTime", breakStartTime).apply();
+
+        tvBreakStartTime.setText("Break-Start Time: " +
+                new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                        .format(new Date(breakStartTime)));
+
         Toast.makeText(this, "Break Started", Toast.LENGTH_SHORT).show();
     }
 
+
     private void handleEndBreak() {
         if (breakStartTime == 0) {
-            Toast.makeText(this, "No active break", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Break not in progress", Toast.LENGTH_SHORT).show();
             return;
         }
+
         totalBreakMillis += System.currentTimeMillis() - breakStartTime;
+        long breakEndTime = System.currentTimeMillis();   // capture end time
         breakStartTime = 0;
+
         prefs.edit()
                 .putLong("totalBreakMillis", totalBreakMillis)
                 .putLong("breakStartTime", 0L)
                 .apply();
+
+        tvBreakEndTime.setText("Break-End Time: " +
+                new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                        .format(new Date(breakEndTime)));
+
         Toast.makeText(this, "Break Ended", Toast.LENGTH_SHORT).show();
     }
-
     private String formatMillis(long ms) {
         long hrs = ms / (1000 * 60 * 60);
         long mins = (ms / (1000 * 60)) % 60;

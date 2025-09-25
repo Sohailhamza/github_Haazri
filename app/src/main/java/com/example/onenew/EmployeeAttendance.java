@@ -11,6 +11,7 @@ public class EmployeeAttendance {
     public long breakMillis;
     public long dutyMillis;
 
+
     public EmployeeAttendance() {} // Firestore ke liye empty constructor
 
     public EmployeeAttendance(String name, String employeeId,
