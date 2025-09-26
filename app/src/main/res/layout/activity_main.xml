@@ -8,50 +8,6 @@
 
     android:background="@drawable/welcome">
 
-    <!-- Welcome text -->
-<!--    <TextView-->
-<!--        android:id="@+id/tvWelcome"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:gravity="center"-->
-<!--        android:text="Welcome"-->
-<!--        android:textSize="50sp"-->
-<!--        android:textColor="@color/black"-->
-<!--        android:textStyle="italic"-->
-<!--        android:layout_marginHorizontal="10dp"-->
-<!--        android:layout_marginBottom="80dp" />-->
-
-    <!-- New Home & Mart Texts -->
-<!--    <LinearLayout-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:orientation="horizontal"-->
-<!--        android:gravity="center"-->
-<!--        android:layout_marginBottom="120dp">-->
-
-<!--        <TextView-->
-<!--            android:id="@+id/tvHome"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="Home"-->
-<!--            android:textAllCaps="true"-->
-<!--            android:textSize="36sp"-->
-<!--            android:textStyle="bold"-->
-<!--            android:textColor="@color/green"-->
-<!--            android:visibility="invisible"/>-->
-
-<!--        <TextView-->
-<!--            android:id="@+id/tvMart"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text=" Mart"-->
-<!--            android:textAllCaps="true"-->
-<!--            android:textStyle="bold"-->
-<!--            android:textSize="36sp"-->
-<!--            android:textColor="@color/red"-->
-<!--            android:visibility="invisible"/>-->
-<!--    </LinearLayout>-->
-
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLogIn"
         android:layout_width="100dp"

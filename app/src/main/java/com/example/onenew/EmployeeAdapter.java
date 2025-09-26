@@ -5,21 +5,33 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHolder> {
+public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHolder>
+        implements Filterable {
 
-    private final List<Employee> employeeList;
+    private final List<Employee> employeeList;   // filtered list
+    private final List<Employee> fullList;       // original list copy
     private final OnEmployeeClickListener listener;
+
+    // ---- Click interface ----
+    public interface OnEmployeeClickListener {
+        void onEmployeeClick(Employee employee);
+    }
 
     public EmployeeAdapter(List<Employee> employeeList, OnEmployeeClickListener listener) {
         this.employeeList = employeeList;
+        this.fullList = new ArrayList<>(employeeList);
         this.listener = listener;
     }
 
@@ -38,21 +50,10 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
 
         holder.tvName.setText(e.getName());
         holder.tvId.setText("ID: " + e.getId());
-        holder.tvStatus.setText("Status: " + e.getStatus());
-//        holder.tvDutyStart.setText("Duty S: " + e.getDutyStartTime());
-//        holder.tvDutyOff.setText("Duty Off: " + e.getDutyOffTime());
-//        holder.tvBreakStart.setText("Break S: " + e.getBreakStartTime());
-//        holder.tvBreakEnd.setText("Break End: " + e.getBreakEndTime());
+        holder.tvPassword.setText("Pass: " + e.getPassword());
         holder.tvPhone.setText("Ph: " + e.getPhone());
         holder.tvAddress.setText("Address: " + e.getAddress());
-
         holder.ivPhoto.setImageResource(e.getImageResId());
-
-        if (e.getStatus().equalsIgnoreCase("Present")) {
-            holder.tvStatus.setTextColor(Color.parseColor("#4CAF50"));
-        } else {
-            holder.tvStatus.setTextColor(Color.parseColor("#F44336"));
-        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onEmployeeClick(e);
@@ -60,29 +61,65 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
     }
 
     @Override
-    public int getItemCount() { return employeeList.size(); }
+    public int getItemCount() {
+        return employeeList.size();
+    }
 
+    // ---------------- Filter for SearchView ----------------
+    @Override
+    public Filter getFilter() {
+        return employeeFilter;
+    }
+
+    private final Filter employeeFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<Employee> filteredList = new ArrayList<>();
+            if (constraint == null || constraint.length() == 0) {
+                filteredList.addAll(fullList);
+            } else {
+                String filterPattern = constraint.toString().toLowerCase().trim();
+                for (Employee emp : fullList) {
+                    if (emp.getName().toLowerCase().contains(filterPattern) ||
+                            emp.getPhone().toLowerCase().contains(filterPattern) ||
+                            emp.getId().toLowerCase().contains(filterPattern)) {
+                        filteredList.add(emp);
+                    }
+                }
+            }
+            FilterResults results = new FilterResults();
+            results.values = filteredList;
+            return results;
+        }
+
+        @SuppressLint("NotifyDataSetChanged")
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            employeeList.clear();
+            employeeList.addAll((List<Employee>) results.values);
+            notifyDataSetChanged();
+        }
+    };
+
+    // 🔄 Call this after Firestore updates so full list refreshes too
+    public void updateFullList(List<Employee> newList) {
+        fullList.clear();
+        fullList.addAll(newList);
+    }
+
+    // ---------------- ViewHolder ----------------
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvId, tvStatus, tvDutyStart, tvDutyOff,
-                tvBreakStart, tvBreakEnd, tvPhone, tvAddress;
+        TextView tvName, tvId, tvPassword, tvPhone, tvAddress;
         ImageView ivPhoto;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivPhoto      = itemView.findViewById(R.id.ivEmployeePhoto);
-            tvName       = itemView.findViewById(R.id.tvEmployeeName);
-            tvId         = itemView.findViewById(R.id.tvEmployeeId);
-            tvStatus     = itemView.findViewById(R.id.tvEmployeeStatus);
-//            tvDutyStart  = itemView.findViewById(R.id.tvDutyStart);
-//            tvDutyOff    = itemView.findViewById(R.id.tvDutyOff);
-//            tvBreakStart = itemView.findViewById(R.id.tvBreakStart);
-//            tvBreakEnd   = itemView.findViewById(R.id.tvBreakEnd);
-            tvPhone      = itemView.findViewById(R.id.tvEmployeePhone);
-            tvAddress    = itemView.findViewById(R.id.tvEmployeeAddress);
+            ivPhoto    = itemView.findViewById(R.id.ivEmployeePhoto);
+            tvName     = itemView.findViewById(R.id.tvEmployeeName);
+            tvId       = itemView.findViewById(R.id.tvEmployeeId);
+            tvPassword = itemView.findViewById(R.id.tvEmployeePassword);
+            tvPhone    = itemView.findViewById(R.id.tvEmployeePhone);
+            tvAddress  = itemView.findViewById(R.id.tvEmployeeAddress);
         }
-    }
-
-    public interface OnEmployeeClickListener {
-        void onEmployeeClick(Employee employee);
     }
 }
