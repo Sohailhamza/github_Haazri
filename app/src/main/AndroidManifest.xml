@@ -4,17 +4,14 @@
     <!-- Camera Permission -->
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="false" />
-
-    <!-- Optional if you want to save the image to storage -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:required="false" /> <!-- Optional if you want to save the image to storage -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
-
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
 
     <application
         android:name=".MyApp"
@@ -27,6 +24,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OneNew"
         tools:ignore="ExtraText">
+        <activity
+            android:name=".reports.AttendanceReportActivity"
+            android:exported="false" />
+        <activity
+            android:name=".reports.AttendanceReportActivity"
+            android:exported="false" />
         <activity
             android:name=".AttendanceSummary"
             android:exported="false" />

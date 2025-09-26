@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Employee Spinner -->
+    <Spinner
+        android:id="@+id/spinnerEmployee"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <!-- Date Range Pickers -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStartDate"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Start Date"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/green"/>
+
+
+        <Button
+            android:id="@+id/btnEndDate"
+            android:text="End Date"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/green"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- Generate Report -->
+    <Button
+        android:id="@+id/btnGenerateReport"
+        android:text="Generate Report"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/green"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Summary Section -->
+    <TextView
+        android:id="@+id/tvSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Summary"
+        android:textStyle="bold"
+        android:layout_marginTop="8dp"/>
+
+    <!-- RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewReport"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>

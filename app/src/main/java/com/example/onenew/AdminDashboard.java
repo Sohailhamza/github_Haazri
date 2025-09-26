@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.example.onenew.reports.AttendanceReportActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class AdminDashboard extends AppCompatActivity {
@@ -21,6 +22,7 @@ public class AdminDashboard extends AppCompatActivity {
         CardView cardEmployeeList   = findViewById(R.id.cardEmployeeList);
         CardView cardViewAttendance = findViewById(R.id.cardViewAttendance);
         CardView cardLogout         = findViewById(R.id.cardLogout);
+        CardView cardViewAttendanceReport = findViewById(R.id.cardViewAttendanceReport);
 
         // ➤ Add-Employee dialog
         cardAddEmployee.setOnClickListener(v -> {
@@ -42,6 +44,10 @@ public class AdminDashboard extends AppCompatActivity {
         // ➤ View attendance
         cardViewAttendance.setOnClickListener(v -> {
             startActivity(new Intent(AdminDashboard.this, AttendanceSummary.class));
+        });
+        // ➤ View attendance report
+        cardViewAttendanceReport.setOnClickListener(v -> {
+            startActivity(new Intent(AdminDashboard.this, AttendanceReportActivity.class));
         });
 
         // ➤ Logout
