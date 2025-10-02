@@ -1,4 +1,4 @@
-package com.example.onenew;
+package com.example.onenew.admin;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -7,6 +7,11 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.example.onenew.AddEmployeeDialog;
+import com.example.onenew.AttendanceSummary;
+import com.example.onenew.LoginActivity;
+import com.example.onenew.R;
+import com.example.onenew.admin.remove.RemoveEmployee;
 import com.example.onenew.reports.AttendanceReportActivity;
 import com.google.firebase.auth.FirebaseAuth;
 

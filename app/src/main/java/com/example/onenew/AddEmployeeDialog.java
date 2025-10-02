@@ -20,6 +20,10 @@ import java.util.Map;
 public class AddEmployeeDialog extends DialogFragment {
 
     private EditText etName, etID, etPassword, etPhoneNum, etAddress;
+
+    private static final String PASSWORD_PATTERN =
+            "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-\\[\\]{};':\"\\\\|,.<>/?]).{6,}$";
+
     private FirebaseFirestore db;
 
     @NonNull
@@ -59,19 +63,25 @@ public class AddEmployeeDialog extends DialogFragment {
             return;
         }
 
-        // 🔹 No image upload — directly save data to Firestore
+        // ✅ Password validation
+        if (!pass.matches(PASSWORD_PATTERN)) {
+            Toast.makeText(getContext(),
+                    "Password must be ≥6 chars, include an uppercase letter, " +
+                            "a number, and a special character.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
         Map<String, Object> emp = new HashMap<>();
         emp.put("name", name);
         emp.put("password", pass);
         emp.put("phone", phone);
         emp.put("address", address);
-        // emp.put("photoUrl", ""); // Optional placeholder
 
         db.collection("employees").document(id)
                 .set(emp)
                 .addOnSuccessListener(a -> {
-                    Toast.makeText(getContext(),
-                            "Employee Added", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Employee Added", Toast.LENGTH_SHORT).show();
                     dismiss();
                 })
                 .addOnFailureListener(e ->
@@ -79,4 +89,5 @@ public class AddEmployeeDialog extends DialogFragment {
                                 "Firestore Error: " + e.getMessage(),
                                 Toast.LENGTH_LONG).show());
     }
+
 }

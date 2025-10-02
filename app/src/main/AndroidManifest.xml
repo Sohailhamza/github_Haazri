@@ -24,12 +24,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OneNew"
         tools:ignore="ExtraText">
+
         <activity
             android:name=".reports.AttendanceReportActivity"
             android:exported="false" />
         <activity
             android:name=".reports.AttendanceReportActivity"
-            android:exported="false" />
+            android:exported="false"
+            tools:ignore="DuplicateActivity" />
         <activity
             android:name=".AttendanceSummary"
             android:exported="false" />
@@ -52,24 +54,29 @@
             android:exported="false"
             android:theme="@style/Theme.OneNew" />
         <activity
-            android:name=".AdminDashboard"
+            android:name=".admin.AdminDashboard"
             android:exported="false" />
         <activity
             android:name=".EmployeeDashboard"
             android:exported="false" />
         <activity
-            android:name=".EmployeeListActivity"
+            android:name=".admin.EmployeeListActivity"
             android:exported="false" />
         <activity
             android:name=".AddEmployeeDialog"
             android:exported="false"
             tools:ignore="Instantiatable" />
         <activity
-            android:name=".RemoveEmployee"
+            android:name=".admin.remove.RemoveEmployee"
             android:exported="false" />
         <activity
             android:name=".CaptureDialog"
             android:exported="false" />
+        <activity
+            android:name="ImageApp"
+            android:exported="false"
+            tools:ignore="Instantiatable"
+            />
     </application>
 
 </manifest>

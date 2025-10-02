@@ -1,4 +1,4 @@
-package com.example.onenew;
+package com.example.onenew.admin;
 
 public class Employee {
     private final String id;

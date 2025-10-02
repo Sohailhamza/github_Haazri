@@ -1,4 +1,4 @@
-package com.example.onenew;
+package com.example.onenew.admin.remove;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -6,6 +6,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.onenew.R;
+import com.example.onenew.admin.Employee;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;

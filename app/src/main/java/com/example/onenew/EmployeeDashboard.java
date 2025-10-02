@@ -25,10 +25,12 @@ import androidx.core.content.ContextCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -42,24 +44,21 @@ public class EmployeeDashboard extends AppCompatActivity {
     // === UI ===
     private TextView tvName, tvEmpId, tvDutyHour, tvBreakDuration,
             tvCheckInBtn, btnCheckOut, btnStartBreak, btnEndBreak,
-            tvDate, tvCheckInTime, tvCheckOutTime,
-            tvBreakStartTime, tvBreakEndTime;
+            tvDate, tvCheckInTime, tvCheckOutTime, tvBreakStartTime, tvBreakEndTime;
+
     private AlertDialog dialog;
     private ImageView dialogImagePreview;
     private Button btnSave;
     private Bitmap capturedImage;
-    // true once a break has been completed
-    boolean breakTaken = false;
 
-
-
-    // === Time tracking ===
+    private boolean breakTaken = false;
     private long checkInTime = 0L;
     private long breakStartTime = 0L;
     private long totalBreakMillis = 0L;
-    private long firstBreakStart = 0L; // keep first break start for Firestore
+    private long firstBreakStart = 0L;
 
     private SharedPreferences prefs;
+    private String checkInDate = "";   // <-- holds the locked date
 
     // Allowed office coordinates
     private static final double OFFICE1_LAT = 30.6484947;
@@ -70,25 +69,26 @@ public class EmployeeDashboard extends AppCompatActivity {
     private static final double OFFICE3_LNG = 73.1276480;
     private static final double OFFICE4_LAT = 30.8768576;
     private static final double OFFICE4_LNG = 73.5926216;
-    private static final float ALLOWED_RADIUS_METERS = 300f;
+
+    private static final double OFFICE5_LAT = 31.5191643;
+    private static final double OFFICE5_LNG = 74.3209694;
+    private static final float ALLOWED_RADIUS_METERS = 1000f;
 
     private FusedLocationProviderClient fusedClient;
 
     private final ActivityResultLauncher<Void> cameraLauncher =
-            registerForActivityResult(new ActivityResultContracts.TakePicturePreview(),
-                    bitmap -> {
-                        if (bitmap != null) {
-                            capturedImage = bitmap;
-                            if (dialogImagePreview != null) {
-                                dialogImagePreview.setImageBitmap(bitmap);
-                                if (btnSave != null) btnSave.setEnabled(true);
-                            }
-                        } else {
-                            Toast.makeText(this, "Camera cancelled", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+            registerForActivityResult(new ActivityResultContracts.TakePicturePreview(), bitmap -> {
+                if (bitmap != null) {
+                    capturedImage = bitmap;
+                    if (dialogImagePreview != null) {
+                        dialogImagePreview.setImageBitmap(bitmap);
+                        if (btnSave != null) btnSave.setEnabled(true);
+                    }
+                } else {
+                    Toast.makeText(this, "Camera cancelled", Toast.LENGTH_SHORT).show();
+                }
+            });
 
-    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,8 +96,9 @@ public class EmployeeDashboard extends AppCompatActivity {
 
         prefs = getSharedPreferences("attendance_prefs", MODE_PRIVATE);
         fusedClient = LocationServices.getFusedLocationProviderClient(this);
-        breakTaken = prefs.getBoolean("breakTaken", false);
 
+        breakTaken = prefs.getBoolean("breakTaken", false);
+        checkInDate = prefs.getString("checkInDate", ""); // load saved date
 
         // Bind Views
         tvName = findViewById(R.id.tvName);
@@ -112,9 +113,7 @@ public class EmployeeDashboard extends AppCompatActivity {
         tvCheckInTime = findViewById(R.id.tvCheckInTime);
         tvCheckOutTime = findViewById(R.id.tvCheckOutTime);
         tvBreakStartTime = findViewById(R.id.tvBreakStartTime);
-        tvBreakEndTime   = findViewById(R.id.tvBreakEndTime);
-
-
+        tvBreakEndTime = findViewById(R.id.tvBreakEndTime);
 
         // name/ID from Login
         String empId = getIntent().getStringExtra("empId");
@@ -122,12 +121,12 @@ public class EmployeeDashboard extends AppCompatActivity {
         tvName.setText(empName != null ? empName : "Employee");
         tvEmpId.setText(empId != null ? empId : "ID");
 
-        // today's date
-        String today = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault())
-                .format(new Date());
-        tvDate.setText(today);
+        // show locked date if exists, else today
+        String displayDate = checkInDate.isEmpty()
+                ? new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date())
+                : checkInDate;
+        tvDate.setText(displayDate);
 
-        // restore state
         restoreSavedState();
 
         tvCheckInBtn.setOnClickListener(v -> attemptAction(this::handleCheckIn));
@@ -138,9 +137,9 @@ public class EmployeeDashboard extends AppCompatActivity {
 
     @SuppressLint("SetTextI18n")
     private void restoreSavedState() {
-        checkInTime     = prefs.getLong("checkInTime", 0L);
-        breakStartTime  = prefs.getLong("breakStartTime", 0L);
-        totalBreakMillis= prefs.getLong("totalBreakMillis", 0L);
+        checkInTime = prefs.getLong("checkInTime", 0L);
+        breakStartTime = prefs.getLong("breakStartTime", 0L);
+        totalBreakMillis = prefs.getLong("totalBreakMillis", 0L);
         firstBreakStart = prefs.getLong("firstBreakStart", 0L);
 
         if (checkInTime != 0L) {
@@ -148,7 +147,7 @@ public class EmployeeDashboard extends AppCompatActivity {
                     new SimpleDateFormat("hh:mm a", Locale.getDefault())
                             .format(new Date(checkInTime)));
         }
-        // if app closed during break, count elapsed time up to now
+
         if (breakStartTime != 0L) {
             long extra = System.currentTimeMillis() - breakStartTime;
             totalBreakMillis += extra;
@@ -169,35 +168,41 @@ public class EmployeeDashboard extends AppCompatActivity {
             Toast.makeText(this, "Already checked in", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // lock the date at the moment of check-in
+        checkInDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        prefs.edit().putString("checkInDate", checkInDate).apply();
+        tvDate.setText(checkInDate);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String empId = tvEmpId.getText().toString();
+
         showCaptureDialog(() -> {
             checkInTime = System.currentTimeMillis();
             prefs.edit().putLong("checkInTime", checkInTime).apply();
-
             tvCheckInTime.setText("Check-In Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(checkInTime)));
+                    new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            .format(new Date(checkInTime)));
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
             Map<String, Object> checkInData = new HashMap<>();
-            checkInData.put("employeeId", tvEmpId.getText().toString());
+            checkInData.put("employeeId", empId);
             checkInData.put("name", tvName.getText().toString());
             checkInData.put("status", "Present");
             checkInData.put("checkInTime",
-                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(checkInTime)));
+                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                            .format(new Date(checkInTime)));
+            checkInData.put("timestamp", FieldValue.serverTimestamp());
 
             db.collection("attendance")
-                    .document(todayId)
+                    .document(checkInDate)
                     .collection("records")
-                    .document(tvEmpId.getText().toString())
+                    .document(empId)
                     .set(checkInData, SetOptions.merge())
                     .addOnSuccessListener(a -> Toast.makeText(this, "Attendance saved", Toast.LENGTH_SHORT).show())
                     .addOnFailureListener(e -> Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
         });
     }
 
-
-
-    // CheckOut
     @SuppressLint("SetTextI18n")
     private void handleCheckOut() {
         if (checkInTime == 0) {
@@ -205,7 +210,6 @@ public class EmployeeDashboard extends AppCompatActivity {
             return;
         }
 
-        // include any ongoing break
         if (breakStartTime != 0L) {
             totalBreakMillis += System.currentTimeMillis() - breakStartTime;
             breakStartTime = 0L;
@@ -214,16 +218,15 @@ public class EmployeeDashboard extends AppCompatActivity {
 
         long now = System.currentTimeMillis();
         long dutyMillis = now - checkInTime - totalBreakMillis;
-
         tvDutyHour.setText("Duty Hour: " + formatMillis(dutyMillis));
         tvBreakDuration.setText("Break Duration: " + formatMillis(totalBreakMillis));
         tvCheckOutTime.setText("Check-Out Time: " +
                 new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(now)));
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         Map<String, Object> update = new HashMap<>();
-        update.put("checkOutTime", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
+        update.put("checkOutTime",
+                new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
         update.put("dutyMillis", dutyMillis);
         update.put("breakMillis", totalBreakMillis);
         if (firstBreakStart != 0L) {
@@ -234,29 +237,29 @@ public class EmployeeDashboard extends AppCompatActivity {
                 new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(now)));
         update.put("status", "CheckedOut");
 
+        // always use locked checkInDate
         db.collection("attendance")
-                .document(todayId)
+                .document(checkInDate)
                 .collection("records")
                 .document(tvEmpId.getText().toString())
                 .set(update, SetOptions.merge())
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast.makeText(this, "Firestore Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
 
-        // clear local state
+        // clear for next day
         prefs.edit()
+                .remove("checkInDate")
                 .putLong("checkInTime", 0L)
                 .putLong("totalBreakMillis", 0L)
                 .putLong("breakStartTime", 0L)
                 .putLong("firstBreakStart", 0L)
                 .apply();
+
         checkInTime = 0L;
         totalBreakMillis = 0L;
         breakStartTime = 0L;
         firstBreakStart = 0L;
+        checkInDate = "";
     }
-
-
-    // Start Break
 
     @SuppressLint("SetTextI18n")
     private void handleStartBreak() {
@@ -277,7 +280,6 @@ public class EmployeeDashboard extends AppCompatActivity {
         prefs.edit().putLong("breakStartTime", breakStartTime).apply();
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         String empId = tvEmpId.getText().toString().trim();
         if (empId.isEmpty()) {
             Toast.makeText(this, "Employee ID missing", Toast.LENGTH_SHORT).show();
@@ -289,26 +291,19 @@ public class EmployeeDashboard extends AppCompatActivity {
                 .format(new Date(breakStartTime)));
 
         db.collection("attendance")
-                .document(todayId)
+                .document(checkInDate)
                 .collection("records")
-                .document(tvEmpId.getText().toString())
+                .document(empId)
                 .set(update, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> Log.d("Firestore", "Break start saved"))
-
                 .addOnFailureListener(e -> Log.e("Firestore", "Error saving break start", e));
-
 
         tvBreakStartTime.setText("Break-Start Time: " +
                 new SimpleDateFormat("hh:mm a", Locale.getDefault())
                         .format(new Date(breakStartTime)));
-
         Toast.makeText(this, "Break Started", Toast.LENGTH_SHORT).show();
     }
 
-
-
-
-    // End Break
     @SuppressLint("SetTextI18n")
     private void handleEndBreak() {
         if (breakStartTime == 0) {
@@ -316,29 +311,24 @@ public class EmployeeDashboard extends AppCompatActivity {
             return;
         }
 
-        // calculate totals
         totalBreakMillis += System.currentTimeMillis() - breakStartTime;
         long breakEndTime = System.currentTimeMillis();
         breakStartTime = 0L;
-
-        // mark break as completed (persist it)
         breakTaken = true;
+
         prefs.edit()
-                .putBoolean("breakTaken", true)               // persist one-break-only flag
+                .putBoolean("breakTaken", true)
                 .putLong("totalBreakMillis", totalBreakMillis)
                 .putLong("breakStartTime", 0L)
                 .putLong("lastBreakEndTime", breakEndTime)
                 .apply();
 
-        // update UI
         tvBreakEndTime.setText("Break-End Time: " +
                 new SimpleDateFormat("hh:mm a", Locale.getDefault())
                         .format(new Date(breakEndTime)));
         Toast.makeText(this, "Break Ended", Toast.LENGTH_SHORT).show();
 
-        // ===== Firestore update =====
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String todayId = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         String empId = tvEmpId.getText().toString().trim();
         if (empId.isEmpty()) {
             Toast.makeText(this, "Employee ID missing", Toast.LENGTH_SHORT).show();
@@ -346,22 +336,18 @@ public class EmployeeDashboard extends AppCompatActivity {
         }
 
         Map<String, Object> update = new HashMap<>();
-        // store readable time and the total break milliseconds
         update.put("breakEnd", new SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                 .format(new Date(breakEndTime)));
         update.put("breakMillis", totalBreakMillis);
 
         db.collection("attendance")
-                .document(todayId)
+                .document(checkInDate)
                 .collection("records")
-                .document(tvEmpId.getText().toString())
+                .document(empId)
                 .set(update, SetOptions.merge())
-                .addOnSuccessListener(aVoid ->
-                        Log.d("Firestore", "Break end saved"))
-                .addOnFailureListener(e ->
-                        Log.e("Firestore", "Error saving break end", e));
+                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Break end saved"))
+                .addOnFailureListener(e -> Log.e("Firestore", "Error saving break end", e));
     }
-
 
     private String formatMillis(long ms) {
         long hrs = ms / (1000 * 60 * 60);
@@ -413,29 +399,23 @@ public class EmployeeDashboard extends AppCompatActivity {
                     float[] d2 = new float[1];
                     float[] d3 = new float[1];
                     float[] d4 = new float[1];
+                    float[] d5 = new float[1];
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(), OFFICE1_LAT, OFFICE1_LNG, d1);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(), OFFICE2_LAT, OFFICE2_LNG, d2);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(), OFFICE3_LAT, OFFICE3_LNG, d3);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(), OFFICE4_LAT, OFFICE4_LNG, d4);
+                    android.location.Location.distanceBetween(
+                            loc.getLatitude(), loc.getLongitude(), OFFICE5_LAT, OFFICE5_LNG, d5);
 
-                    android.location.Location.distanceBetween(
-                            loc.getLatitude(), loc.getLongitude(),
-                            OFFICE1_LAT, OFFICE1_LNG, d1);
-                    android.location.Location.distanceBetween(
-                            loc.getLatitude(), loc.getLongitude(),
-                            OFFICE2_LAT, OFFICE2_LNG, d2);
-                    android.location.Location.distanceBetween(
-                            loc.getLatitude(), loc.getLongitude(),
-                            OFFICE3_LAT, OFFICE3_LNG, d3);
-                    android.location.Location.distanceBetween(
-                            loc.getLatitude(), loc.getLongitude(),
-                            OFFICE4_LAT, OFFICE4_LNG, d4);
-
-                    if (d1[0] <= ALLOWED_RADIUS_METERS ||
-                            d2[0] <= ALLOWED_RADIUS_METERS ||
-                            d3[0] <= ALLOWED_RADIUS_METERS ||
-                            d4[0] <= ALLOWED_RADIUS_METERS) {
+                    if (d1[0] <= ALLOWED_RADIUS_METERS || d2[0] <= ALLOWED_RADIUS_METERS ||
+                            d3[0] <= ALLOWED_RADIUS_METERS || d4[0] <= ALLOWED_RADIUS_METERS || d5[0] <= ALLOWED_RADIUS_METERS) {
                         action.run();
                     } else {
-                        Toast.makeText(this,
-                                "You are not at an allowed office location!",
-                                Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "You are not at an allowed office location!", Toast.LENGTH_LONG).show();
                     }
                 })
                 .addOnFailureListener(e ->

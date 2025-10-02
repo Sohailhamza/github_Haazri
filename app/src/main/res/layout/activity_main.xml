@@ -29,6 +29,7 @@
             <ImageView
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:padding="2dp"
                 android:src="@drawable/baseline_chevron_right_24"
                 app:tint="@color/black" />
 
@@ -42,7 +43,7 @@
                 android:textAllCaps="true"
                 android:textColor="@color/black"
                 android:padding="2dp"
-                android:textSize="25sp"/>
+                android:textSize="20sp"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout>

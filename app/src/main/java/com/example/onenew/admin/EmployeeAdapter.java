@@ -1,7 +1,6 @@
-package com.example.onenew;
+package com.example.onenew.admin;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +12,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.onenew.R;
 
 import java.util.ArrayList;
 import java.util.List;

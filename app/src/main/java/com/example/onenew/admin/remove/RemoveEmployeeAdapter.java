@@ -1,4 +1,4 @@
-package com.example.onenew;
+package com.example.onenew.admin.remove;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +7,9 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.onenew.R;
+import com.example.onenew.admin.Employee;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.List;
 

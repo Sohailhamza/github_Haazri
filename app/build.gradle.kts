@@ -50,6 +50,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:26.0.1")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.cloudinary:cloudinary-android:3.1.2")
 
 
 }
