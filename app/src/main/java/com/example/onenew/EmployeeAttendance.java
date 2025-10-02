@@ -8,6 +8,8 @@ public class EmployeeAttendance {
     public String checkOutTime;
     public String breakStart;
     public String breakEnd;
+
+    public String selfieUrl;
     public long breakMillis;
     public long dutyMillis;
 
@@ -19,6 +21,7 @@ public class EmployeeAttendance {
                               String checkInTime,
                               String checkOutTime,
                               String breakStart, String breakEnd,
+                              String selfieUrl,
 
                               long breakMillis,
                               long dutyMillis) {
@@ -31,5 +34,6 @@ public class EmployeeAttendance {
         this.breakEnd = breakEnd;
         this.breakMillis = breakMillis;
         this.dutyMillis = dutyMillis;
+        this.selfieUrl = selfieUrl;
     }
 }

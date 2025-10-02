@@ -22,6 +22,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
@@ -29,6 +32,8 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -169,38 +174,83 @@ public class EmployeeDashboard extends AppCompatActivity {
             return;
         }
 
-        // lock the date at the moment of check-in
         checkInDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         prefs.edit().putString("checkInDate", checkInDate).apply();
         tvDate.setText(checkInDate);
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         String empId = tvEmpId.getText().toString();
 
         showCaptureDialog(() -> {
-            checkInTime = System.currentTimeMillis();
-            prefs.edit().putLong("checkInTime", checkInTime).apply();
-            tvCheckInTime.setText("Check-In Time: " +
-                    new SimpleDateFormat("hh:mm a", Locale.getDefault())
-                            .format(new Date(checkInTime)));
+            // 👉 Upload captured selfie first
+            uploadImageToCloudinary(capturedImage, imageUrl -> {
+                checkInTime = System.currentTimeMillis();
+                prefs.edit().putLong("checkInTime", checkInTime).apply();
+                tvCheckInTime.setText("Check-In Time: " +
+                        new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                                .format(new Date(checkInTime)));
 
-            Map<String, Object> checkInData = new HashMap<>();
-            checkInData.put("employeeId", empId);
-            checkInData.put("name", tvName.getText().toString());
-            checkInData.put("status", "Present");
-            checkInData.put("checkInTime",
-                    new SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                            .format(new Date(checkInTime)));
-            checkInData.put("timestamp", FieldValue.serverTimestamp());
+                Map<String, Object> checkInData = new HashMap<>();
+                checkInData.put("employeeId", empId);
+                checkInData.put("name", tvName.getText().toString());
+                checkInData.put("status", "Present");
+                checkInData.put("checkInTime",
+                        new SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                                .format(new Date(checkInTime)));
+                checkInData.put("timestamp", FieldValue.serverTimestamp());
+                checkInData.put("selfieUrl", imageUrl); // 🔥 selfie link saved
 
-            db.collection("attendance")
-                    .document(checkInDate)
-                    .collection("records")
-                    .document(empId)
-                    .set(checkInData, SetOptions.merge())
-                    .addOnSuccessListener(a -> Toast.makeText(this, "Attendance saved", Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(e -> Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                FirebaseFirestore.getInstance()
+                        .collection("attendance")
+                        .document(checkInDate)
+                        .collection("records")
+                        .document(empId)
+                        .set(checkInData, SetOptions.merge())
+                        .addOnSuccessListener(a -> Toast.makeText(this, "Attendance saved", Toast.LENGTH_SHORT).show())
+                        .addOnFailureListener(e -> Toast.makeText(this, "Firestore Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            });
         });
+    }
+
+    // ------------ Upload Image to Cloudinary and return URL ------------
+    private void uploadImageToCloudinary(Bitmap bitmap, OnImageUploaded callback) {
+        try {
+            File file = new File(getCacheDir(), "selfie_" + System.currentTimeMillis() + ".jpg");
+            FileOutputStream out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            out.flush();
+            out.close();
+
+            MediaManager.get().upload(file.getAbsolutePath())
+                    .unsigned("checkin_upload") // 👈 tumhara preset
+                    .callback(new UploadCallback() {
+                        @Override
+                        public void onStart(String requestId) {
+                            Toast.makeText(EmployeeDashboard.this, "Uploading selfie...", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
+                        @Override
+                        public void onSuccess(String requestId, Map resultData) {
+                            String url = resultData.get("secure_url").toString();
+                            callback.onUploaded(url);
+                        }
+
+                        @Override
+                        public void onError(String requestId, ErrorInfo error) {
+                            Toast.makeText(EmployeeDashboard.this, "Upload failed: " + error.getDescription(), Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override public void onReschedule(String requestId, ErrorInfo error) {}
+                    })
+                    .dispatch();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Callback interface
+    interface OnImageUploaded {
+        void onUploaded(String url);
     }
 
     @SuppressLint("SetTextI18n")
