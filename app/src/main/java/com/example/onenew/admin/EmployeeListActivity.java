@@ -79,6 +79,7 @@ public class EmployeeListActivity extends AppCompatActivity {
                             String password = doc.getString("password");
                             String phone    = doc.getString("phone");
                             String address  = doc.getString("address");
+                            String photoUrl = doc.getString("photo"); // 🔄 Get photo URL
 
                             Employee emp = new Employee(
                                     id,
@@ -86,7 +87,8 @@ public class EmployeeListActivity extends AppCompatActivity {
                                     password != null ? password : "",
                                     phone != null ? phone : "",
                                     address != null ? address : "",
-                                    R.drawable.ic_person
+                                    photoUrl != null ? photoUrl : ""
+
                             );
                             employeeList.add(emp);
                         }

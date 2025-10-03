@@ -8,4 +8,10 @@
     </style>
 
     <style name="Theme.OneNew" parent="Base.Theme.OneNew" />
+
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
 </resources>

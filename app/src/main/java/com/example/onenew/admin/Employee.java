@@ -11,13 +11,13 @@ public class Employee {
 //    private final String breakEndTime;
     private final String phone;
     private final String address;
-    private final int imageResId;   // local drawable only
+    private final String photoUrl;   // 🔄 Cloudinary URL instead of int
 
     public Employee(String id, String name, String password,
 //                    String dutyStartTime, String dutyOffTime,
 
 //                    String breakStartTime, String breakEndTime,
-                    String phone, String address, int imageResId)
+                    String phone, String address, String photoUrl)
     {
         this.id = id;
         this.name = name;
@@ -29,7 +29,7 @@ public class Employee {
 //        this.breakEndTime = breakEndTime;
         this.phone = phone;
         this.address = address;
-        this.imageResId = imageResId;
+        this.photoUrl = photoUrl;
     }
 
     public String getId() { return id; }
@@ -44,5 +44,5 @@ public class Employee {
 //    public String getBreakEndTime() { return breakEndTime; }
     public String getPhone() { return phone; }
     public String getAddress() { return address; }
-    public int getImageResId() { return imageResId; }
+    public String getPhotoUrl() { return photoUrl; }
 }

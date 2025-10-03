@@ -45,8 +45,7 @@ public class RemoveEmployee extends AppCompatActivity {
                         String status  = d.getString("status");   // optional
                         String address = d.getString("address");
                         String phone   = d.getString("phone");
-
-
+                        String photoUrl = d.getString("photo");   // 🔄 Get photo URL
 
                         employees.add(new Employee(
                                 id,
@@ -54,8 +53,8 @@ public class RemoveEmployee extends AppCompatActivity {
                                 status != null ? status : "—",
                                 phone != null ? phone : "",
                                 address != null ? address : "",
+                                photoUrl != null ? photoUrl : ""
 
-                                R.drawable.ic_person      // ya jo default photo aap use kar rahe hain
                         ));
                     }
                     adapter.notifyDataSetChanged();

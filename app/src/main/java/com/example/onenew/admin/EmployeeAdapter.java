@@ -17,6 +17,7 @@ import com.example.onenew.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.bumptech.glide.Glide;
 
 public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHolder>
         implements Filterable {
@@ -54,7 +55,14 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
         holder.tvPassword.setText("Pass: " + e.getPassword());
         holder.tvPhone.setText("Ph: " + e.getPhone());
         holder.tvAddress.setText("Address: " + e.getAddress());
-        holder.ivPhoto.setImageResource(e.getImageResId());
+
+        // 🔄 Load image from URL using Glide
+        Glide.with(holder.itemView.getContext())
+                .load(e.getPhotoUrl())
+                .placeholder(R.drawable.ic_person) // default while loading
+                .error(R.drawable.ic_person)       // if URL fails
+                .circleCrop()
+                .into(holder.ivPhoto);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onEmployeeClick(e);

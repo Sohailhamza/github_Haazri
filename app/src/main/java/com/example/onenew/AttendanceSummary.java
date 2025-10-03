@@ -31,7 +31,7 @@ public class AttendanceSummary extends AppCompatActivity {
 
     private AttendanceAdapter presentAdapter, absentAdapter;
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint({"MissingInflatedId", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
