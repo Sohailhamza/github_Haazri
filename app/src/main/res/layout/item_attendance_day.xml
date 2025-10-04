@@ -12,6 +12,7 @@
         android:layout_weight="1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="2025-09-26"/>
 
     <TextView
@@ -19,6 +20,7 @@
         android:layout_weight="1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="Present"/>
 
     <TextView
@@ -26,13 +28,15 @@
         android:layout_weight="1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="12:30"/>
+        android:textColor="@color/black"
+        android:text="12:00"/>
 
     <TextView
         android:id="@+id/tvOvertime"
         android:layout_weight="1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="0:30"/>
 
     <TextView
@@ -40,5 +44,6 @@
         android:layout_weight="1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="0:00"/>
 </LinearLayout>

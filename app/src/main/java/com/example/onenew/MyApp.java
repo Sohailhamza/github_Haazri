@@ -1,5 +1,7 @@
 package com.example.onenew;
 
+import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
+
 import android.app.Application;
 import androidx.appcompat.app.AppCompatDelegate;
 
@@ -8,6 +10,6 @@ public class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
         // Phone dark/light mode ko ignore karke hamesha Light theme use karega
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_NO);
     }
 }

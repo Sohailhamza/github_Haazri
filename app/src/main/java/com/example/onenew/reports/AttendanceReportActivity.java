@@ -2,188 +2,214 @@ package com.example.onenew.reports;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.widget.*;
-import androidx.annotation.Nullable;
+import android.util.Log;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.onenew.R;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class AttendanceReportActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerView;
+    private AttendanceReportAdapter adapter;
+    private List<AttendanceRecord> recordList;
+    private FirebaseFirestore firestore;
 
     private Spinner spinnerEmployee;
     private Button btnStartDate, btnEndDate, btnGenerateReport;
     private TextView tvSummary;
-    private RecyclerView recyclerViewReport;
 
-    private final Calendar startDate = Calendar.getInstance();
-    private final Calendar endDate   = Calendar.getInstance();
+    private List<String> employeeIds;
+    private String selectedStartDate = null;
+    private String selectedEndDate = null;
 
-    private final List<AttendanceRecord> recordList = new ArrayList<>();
-    private AttendanceReportAdapter adapter;
-
-    private FirebaseFirestore firestore;
-    private final List<String> employees = new ArrayList<>();
-    private ArrayAdapter<String> spinnerAdapter;
+    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance_report);
 
-        spinnerEmployee   = findViewById(R.id.spinnerEmployee);
-        btnStartDate      = findViewById(R.id.btnStartDate);
-        btnEndDate        = findViewById(R.id.btnEndDate);
-        btnGenerateReport = findViewById(R.id.btnGenerateReport);
-        tvSummary         = findViewById(R.id.tvSummary);
-        recyclerViewReport= findViewById(R.id.recyclerViewReport);
+        recyclerView = findViewById(R.id.recyclerViewReport);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        recyclerViewReport.setLayoutManager(new LinearLayoutManager(this));
+        spinnerEmployee = findViewById(R.id.spinnerEmployee);
+        btnStartDate = findViewById(R.id.btnStartDate);
+        btnEndDate = findViewById(R.id.btnEndDate);
+        btnGenerateReport = findViewById(R.id.btnGenerateReport);
+        tvSummary = findViewById(R.id.tvSummary);
+
+        recordList = new ArrayList<>();
         adapter = new AttendanceReportAdapter(recordList);
-        recyclerViewReport.setAdapter(adapter);
+        recyclerView.setAdapter(adapter);
 
         firestore = FirebaseFirestore.getInstance();
+        employeeIds = new ArrayList<>();
 
-        // spinner adapter
-        spinnerAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, employees);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerEmployee.setAdapter(spinnerAdapter);
+        loadEmployees();
 
-        loadEmployees();        // 🔑 Load employee IDs here
+        btnStartDate.setOnClickListener(v -> showDatePicker(true));
+        btnEndDate.setOnClickListener(v -> showDatePicker(false));
 
-        btnStartDate.setOnClickListener(v -> pickDate(startDate, btnStartDate));
-        btnEndDate.setOnClickListener(v -> pickDate(endDate, btnEndDate));
-        btnGenerateReport.setOnClickListener(v -> generateReport());
+        btnGenerateReport.setOnClickListener(v -> {
+            int selectedPos = spinnerEmployee.getSelectedItemPosition();
+            if (selectedPos >= 0 && selectedPos < employeeIds.size()) {
+                String empId = employeeIds.get(selectedPos);
+                loadAttendanceData(empId);
+            }
+        });
     }
 
     private void loadEmployees() {
         firestore.collection("employees")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    employees.clear();
-                    for (QueryDocumentSnapshot doc : querySnapshot) {
-                        // prefer a field "employeeId", fallback to doc id
-                        String empId = doc.getString("employeeId");
-                        if (empId == null || empId.trim().isEmpty()) {
-                            empId = doc.getId();
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        employeeIds.clear();
+                        for (DocumentSnapshot doc : task.getResult()) {
+                            employeeIds.add(doc.getId());
                         }
-                        employees.add(empId);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                                android.R.layout.simple_spinner_item, employeeIds);
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spinnerEmployee.setAdapter(adapter);
+                    } else {
+                        Log.e("Firestore", "Error loading employees", task.getException());
                     }
-                    if (employees.isEmpty()) {
-                        Toast.makeText(this, "No employees found", Toast.LENGTH_SHORT).show();
-                    }
-                    spinnerAdapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error loading employees: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show());
+                });
     }
 
-    private void pickDate(Calendar date, Button btn) {
-        DatePickerDialog dpd = new DatePickerDialog(this,
-                (view, year, month, day) -> {
-                    date.set(year, month, day);
-                    btn.setText(day + "/" + (month + 1) + "/" + year);
+    private void showDatePicker(boolean isStart) {
+        Calendar calendar = Calendar.getInstance();
+        DatePickerDialog dialog = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    String date = year + "-" + String.format(Locale.getDefault(), "%02d", month + 1)
+                            + "-" + String.format(Locale.getDefault(), "%02d", dayOfMonth);
+                    if (isStart) {
+                        selectedStartDate = date;
+                        btnStartDate.setText("Start: " + date);
+                    } else {
+                        selectedEndDate = date;
+                        btnEndDate.setText("End: " + date);
+                    }
                 },
-                date.get(Calendar.YEAR),
-                date.get(Calendar.MONTH),
-                date.get(Calendar.DAY_OF_MONTH));
-        dpd.show();
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+        );
+        dialog.show();
     }
 
-    private void generateReport() {
-        if (employees.isEmpty()) {
-            Toast.makeText(this, "No employees loaded", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (spinnerEmployee.getSelectedItem() == null) {
-            Toast.makeText(this, "Select an employee", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String selectedEmployee = spinnerEmployee.getSelectedItem().toString();
-        recordList.clear();
-        adapter.notifyDataSetChanged();
-
-        final long TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
-
-        // ✅ Use your actual collection name (lower-case)
+    private void loadAttendanceData(String empId) {
         firestore.collection("attendance")
-                .whereEqualTo("employeeId", selectedEmployee)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        recordList.clear();
+                        final int[] presentCount = {0};
+                        final int[] absentCount = {0};
 
-                    int presentDays = 0;
-                    int leaveDays   = 0;
-                    long totalOver  = 0;
-                    long totalUnder = 0;
-
-                    for (QueryDocumentSnapshot doc : querySnapshot) {
-                        AttendanceRecord rec = doc.toObject(AttendanceRecord.class);
-                        if (rec == null || rec.date == null || rec.date.trim().isEmpty()) continue;
-
-                        // Parse yyyy-MM-dd safely
-                        String[] parts = rec.date.split("-");
-                        if (parts.length != 3) continue;
-                        Calendar recCal = Calendar.getInstance();
-                        try {
-                            recCal.set(
-                                    Integer.parseInt(parts[0]),
-                                    Integer.parseInt(parts[1]) - 1,
-                                    Integer.parseInt(parts[2])
-                            );
-                        } catch (NumberFormatException e) {
-                            continue;
+                        List<DocumentSnapshot> dateDocs = task.getResult().getDocuments();
+                        if (dateDocs.isEmpty()) {
+                            adapter.notifyDataSetChanged();
+                            tvSummary.setText("Summary: Present = 0, Absent = 0");
+                            return;
                         }
 
-                        // Filter by selected range (inclusive)
-                        if (recCal.before(startDate) || recCal.after(endDate)) continue;
+                        final int[] processedCount = {0};
+                        int totalDates = dateDocs.size();
 
-                        recordList.add(rec);
+                        for (DocumentSnapshot dateDoc : dateDocs) {
+                            String dateId = dateDoc.getId();
 
-                        if ("CheckedOut".equalsIgnoreCase(rec.status)) {
-                            presentDays++;
+                            dateDoc.getReference().collection("records").document(empId)
+                                    .get()
+                                    .addOnSuccessListener(empDoc -> {
+                                        processedCount[0]++;
 
-                            long worked = rec.dutyMillis - rec.breakMillis;
-                            if (worked > TWELVE_HOURS_MS) {
-                                totalOver += (worked - TWELVE_HOURS_MS);
-                            } else if (worked < TWELVE_HOURS_MS) {
-                                totalUnder += (TWELVE_HOURS_MS - worked);
-                            }
-                        } else {
-                            leaveDays++;
+                                        String status = "Absent"; // default
+                                        String dutyHours = "00:00";
+                                        String overtime = "0:00";
+                                        String shortTime = "0:00";
+
+                                        if (empDoc.exists()) {
+                                            status = empDoc.getString("status");
+                                            long dutyMillis = empDoc.getLong("dutyMillis") != null ? empDoc.getLong("dutyMillis") : 0;
+
+                                            int hours = (int) (dutyMillis / (1000 * 60 * 60));
+                                            int minutes = (int) ((dutyMillis / (1000 * 60)) % 60);
+                                            dutyHours = String.format("%02d:%02d", hours, minutes);
+
+                                            String[] times = calculateOvertimeAndShorttime(hours, minutes);
+                                            overtime = times[0];
+                                            shortTime = times[1];
+                                        }
+
+                                        if (isWithinDateRange(dateId)) {
+                                            AttendanceRecord record = new AttendanceRecord(dateId, status, dutyHours, overtime, shortTime);
+                                            recordList.add(record);
+
+                                            if ("CheckedIn".equalsIgnoreCase(status) || "CheckedOut".equalsIgnoreCase(status) || "Present".equalsIgnoreCase(status))
+                                                presentCount[0]++;
+                                            else if ("Absent".equalsIgnoreCase(status))
+                                                absentCount[0]++;
+                                        }
+
+                                        if (processedCount[0] == totalDates) {
+                                            adapter.notifyDataSetChanged();
+                                            tvSummary.setText("Summary: Present = " + presentCount[0] + ", Absent = " + absentCount[0]);
+                                        }
+                                    });
                         }
+
+                    } else {
+                        Log.e("Firestore", "Error loading attendance", task.getException());
                     }
-
-                    adapter.notifyDataSetChanged();
-
-                    if (recordList.isEmpty()) {
-                        tvSummary.setText("No attendance records in selected range.");
-                        return;
-                    }
-
-                    String summary =
-                            "Present Days : " + presentDays + "\n" +
-                                    "Leave Days   : " + leaveDays + "\n" +
-                                    "Total Overtime : " + TimeUnit.MILLISECONDS.toHours(totalOver) + "h "
-                                    + (TimeUnit.MILLISECONDS.toMinutes(totalOver) % 60) + "m\n" +
-                                    "Total Shortfall: " + TimeUnit.MILLISECONDS.toHours(totalUnder) + "h "
-                                    + (TimeUnit.MILLISECONDS.toMinutes(totalUnder) % 60) + "m";
-
-                    tvSummary.setText(summary);
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this,
-                                "Error fetching report: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show());
+                });
     }
 
+    private String[] calculateOvertimeAndShorttime(int hours, int minutes) {
+        String[] result = {"0:00", "0:00"};
+        int totalMin = hours * 60 + minutes;
+        int standardMin = 12 * 60;
+
+        if (totalMin > standardMin) {
+            int extra = totalMin - standardMin;
+            result[0] = (extra / 60) + ":" + String.format("%02d", extra % 60);
+        } else if (totalMin < standardMin) {
+            int shortTime = standardMin - totalMin;
+            result[1] = (shortTime / 60) + ":" + String.format("%02d", shortTime % 60);
+        }
+        return result;
+    }
+
+    private boolean isWithinDateRange(String dateStr) {
+        if (selectedStartDate == null || selectedEndDate == null) return true;
+        try {
+            Date date = sdf.parse(dateStr);
+            Date start = sdf.parse(selectedStartDate);
+            Date end = sdf.parse(selectedEndDate);
+            return date != null && !date.before(start) && !date.after(end);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

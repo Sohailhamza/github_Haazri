@@ -14,4 +14,11 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
+    <!-- Base app theme -->
+    <style name="Theme.MyApp.Light" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:colorBackground">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
 </resources>

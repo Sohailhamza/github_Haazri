@@ -4,68 +4,43 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.onenew.R;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class AttendanceReportAdapter extends RecyclerView.Adapter<AttendanceReportAdapter.ViewHolder> {
 
-    private List<AttendanceRecord> records;
+    private List<AttendanceRecord> recordList;
 
-    public AttendanceReportAdapter(List<AttendanceRecord> records) {
-        this.records = records;
+    public AttendanceReportAdapter(List<AttendanceRecord> recordList) {
+        this.recordList = recordList;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Inflate your custom item layout
-        View view = LayoutInflater.from(parent.getContext())
+        View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_attendance_day, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        AttendanceRecord record = records.get(position);
+        AttendanceRecord record = recordList.get(position);
 
-        holder.tvDate.setText(record.date);
-        holder.tvStatus.setText(record.status);
-
-        long workMillis = record.dutyMillis - record.breakMillis;
-        long TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
-
-        // Duty hours
-        long dutyHrs = TimeUnit.MILLISECONDS.toHours(workMillis);
-        long dutyMin = TimeUnit.MILLISECONDS.toMinutes(workMillis) % 60;
-        holder.tvDutyHours.setText(String.format("%d:%02d", dutyHrs, dutyMin));
-
-        // Overtime / Shortfall
-        if (workMillis > TWELVE_HOURS_MS) {
-            long overtime = workMillis - TWELVE_HOURS_MS;
-            holder.tvOvertime.setText(String.format("%d:%02d",
-                    TimeUnit.MILLISECONDS.toHours(overtime),
-                    TimeUnit.MILLISECONDS.toMinutes(overtime) % 60));
-            holder.tvShortTime.setText("0:00");
-        } else if (workMillis < TWELVE_HOURS_MS) {
-            long shortfall = TWELVE_HOURS_MS - workMillis;
-            holder.tvShortTime.setText(String.format("%d:%02d",
-                    TimeUnit.MILLISECONDS.toHours(shortfall),
-                    TimeUnit.MILLISECONDS.toMinutes(shortfall) % 60));
-            holder.tvOvertime.setText("0:00");
-        } else {
-            holder.tvOvertime.setText("0:00");
-            holder.tvShortTime.setText("0:00");
-        }
+        holder.tvDate.setText(record.getDate());
+        holder.tvStatus.setText(record.getStatus());
+        holder.tvDutyHours.setText(record.getDutyHours());
+        holder.tvOvertime.setText(record.getOvertime());
+        holder.tvShortTime.setText(record.getShortTime());
     }
 
     @Override
     public int getItemCount() {
-        return records.size();
+        return recordList.size();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
